@@ -97,6 +97,7 @@ class PostgreSQLManager extends DBManager
 			'varchar'  => 'varchar',
 			'text'     => 'text',
 			'longtext' => 'text',
+			'longhtml' => 'text',
 			'date'     => 'date',
 			'enum'     => 'varchar(255)',
 			'relate'   => 'varchar(255)',
