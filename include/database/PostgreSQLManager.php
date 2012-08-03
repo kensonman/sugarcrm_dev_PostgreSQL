@@ -1300,5 +1300,24 @@ class PostgreSQLManager extends DBManager
 			return false;
 		else
 			return in_array($name,$sequences);
-	}	
+	}
+
+	/**
+	 * (non-PHPdoc)
+	 * @see DBManager::getFromDummyTable()
+	 */
+	public function getFromDummyTable()
+	{
+		return "";
+	}
+
+	/**
+	 * (non-PHPdoc)
+	 * @see DBManager::getGuidSQL()
+	 */
+	public function getGuidSQL()
+	{
+		return "uuid_generate_v1()";
+	}
+	
 }
