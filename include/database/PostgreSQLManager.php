@@ -46,9 +46,9 @@ if(!defined('sugarEntry') || !sugarEntry) die('Not A Valid Entry Point');
 * The passed bean is passed to helper class which uses these functions to generate correct sql.
 *
 *
-* Portions created by SugarCRM are Copyright (C) SugarCRM, Inc.
+* Portions created by Antonio Musarra are Copyright (C) Antonio Musarra
 * All Rights Reserved.
-* Contributor(s): ______________________________________..
+* Contributor(s): Antonio Musarra <antonio.musarra@gmail.com>
 ********************************************************************************/
 
 /**
