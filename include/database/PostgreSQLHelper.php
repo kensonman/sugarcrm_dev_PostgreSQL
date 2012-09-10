@@ -45,9 +45,9 @@ if(!defined('sugarEntry') || !sugarEntry) die('Not A Valid Entry Point');
  * MysqliManager for similar fixes and if none exist by porting the changes from MysqlHelper
  * to either MysqlManager or MysqliManager.
 *
-* Portions created by SugarCRM are Copyright (C) SugarCRM, Inc.
+* Portions created by Antonio Musarra are Copyright (C) Antonio Musarra
 * All Rights Reserved.
-* Contributor(s): ______________________________________..
+* Contributor(s): Antonio Musarra <antonio.musarra@gmail.com>
 ********************************************************************************/
 
 /**
