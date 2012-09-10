@@ -37,13 +37,9 @@ if(!defined('sugarEntry') || !sugarEntry) die('Not A Valid Entry Point');
 
 /*********************************************************************************
 
- * Description: The functionality of the MysqlHelper class has been moved to MysqlManager and
- * MysqliManager. This class is no longer used and no code should be added to
- * this file or reference anything in this class. The sole purpose of keeping this class as
- * an empty, deprecated and final class is to cause a conflict when merging functionality or bug fixes
- * from upstream projects. MERGE CONFLICTS should be resolved by inspecting MysqlManager and
- * MysqliManager for similar fixes and if none exist by porting the changes from MysqlHelper
- * to either MysqlManager or MysqliManager.
+ * Description: The functionality of the PostgreSQLHelper class has been moved to PostgreSQLManager and
+ * This class is no longer used and no code should be added to
+ * this file or reference anything in this class.
 *
 * Portions created by Antonio Musarra are Copyright (C) Antonio Musarra
 * All Rights Reserved.
