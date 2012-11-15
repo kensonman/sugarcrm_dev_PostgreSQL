@@ -595,7 +595,9 @@ class PostgreSQLManager extends DBManager
 				}
 				return "COALESCE($all_strings)";
 			case 'concat':
-				return "(" . str_replace(",' ',", " || ' ' || ", $all_strings) . ")";
+				$pattern = "/(,'\&nbsp;',)|(,'\s',)/";
+				$replacement = " || ' ' || ";
+				return "(" . preg_replace($pattern, $replacement, $all_strings) . ")";
 			case 'quarter':
 					return "TO_CHAR($string, 'Q')";
 			case "length":
