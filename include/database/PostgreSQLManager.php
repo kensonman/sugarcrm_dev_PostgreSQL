@@ -485,7 +485,7 @@ class PostgreSQLManager extends DBManager
 				"host=".$configOptions['db_host_name'] .
 				" user=".$configOptions['db_user_name'] .
 				" password=".$configOptions['db_password'].
-				" dbname=".$configOptions['db_name']
+				" dbname=".((!isset($configOptions['db_name']) || empty($configOptions['db_name']))?'template1':$configOptions['db_name'])
 				);
 		}
 
@@ -494,7 +494,7 @@ class PostgreSQLManager extends DBManager
 				"host=".$configOptions['db_host_name'] .
 				" user=".$configOptions['db_user_name'] .
 				" password=".$configOptions['db_password'].
-				" dbname=".$configOptions['db_name']
+				" dbname=".((!isset($configOptions['db_name']) || empty($configOptions['db_name']))?'template1':$configOptions['db_name'])
 				);
 			if(empty($this->database)) {
 				$GLOBALS['log']->fatal("Could not connect to server ".$configOptions['db_host_name']." as ".$configOptions['db_user_name']);
