@@ -1,7 +1,7 @@
 <?php
 /*********************************************************************************
  * SugarCRM Community Edition is a customer relationship management program developed by
- * SugarCRM, Inc. Copyright (C) 2004-2012 SugarCRM Inc.
+ * SugarCRM, Inc. Copyright (C) 2004-2013 SugarCRM Inc.
  * 
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Affero General Public License version 3 as published by the
@@ -116,7 +116,9 @@ $mod_strings = array (
 	'LBL_USE_REAL_NAMES_DESC'			=> 'Display users\' full names instead of their User Names in assignment fields.',
     'LBL_DISALBE_CONVERT_LEAD' => 'Disable convert lead action for converted leads',
     'LBL_DISALBE_CONVERT_LEAD_DESC' => 'If a lead has already been converted, enabling this option will remove the convert lead action.',
-	'LIST_ENTRIES_PER_LISTVIEW'=>'Listview items per page',
+    'LBL_ENABLE_ACTION_MENU' => 'Display actions within menus',
+    'LBL_ENABLE_ACTION_MENU_DESC' => 'Select to display DetailView and subpanel actions within a dropdown menu. If un-selected, the actions will display as separate buttons.',
+    'LIST_ENTRIES_PER_LISTVIEW'=>'Listview items per page',
 	'LIST_ENTRIES_PER_SUBPANEL'=>'Subpanel items per page',
 	'LOG_MEMORY_USAGE'=>'Log memory usage',
 	'LOG_SLOW_QUERIES'=>'Log slow queries',
@@ -125,6 +127,7 @@ $mod_strings = array (
     'CURRENT_LOGO_HELP'=>'This logo is displayed in the left-hand corner of the footer of the Sugar application.',
     'NEW_LOGO'=>'Select Logo:',
 	'NEW_LOGO_HELP'=>'The image file format can be either .png or .jpg. The maximum height is 17px, and the maximum width is 450px. Any image uploaded that is larger in any direction will be scaled to these max dimensions.',
+    'NEW_LOGO_HELP_NO_SPACE'=>'The image file format can be either .png or .jpg. The maximum height is 17px, and the maximum width is 450px. Any image uploaded that is larger in any direction will be scaled to these max dimensions. Image file name must not contain a space character.',
     'NEW_QUOTE_LOGO'=>'Upload new Quotes logo',
     'NEW_QUOTE_LOGO_HELP'=>'The required image file format is .jpg.<BR>The recommended size is 867x74 px.',
     'QUOTES_CURRENT_LOGO'=>'Quotes logo',
@@ -429,6 +432,7 @@ To configure additional system settings, click <a href="index.php?module=Adminis
 	'LBL_WELCOME' => 'Welcome' /*for 508 compliance fix*/,
 	'LBL_LOGO' => 'Logo' /*for 508 compliance fix*/,
     'LBL_MOBILE_MOD_REPORTS_RESTRICTION' => '* The Reports module is only available for the Sugar Mobile native clients',
+    'LBL_ENABLE_HISTORY_CONTACTS_EMAILS' => 'Show related contacts\' emails in History subpanel for modules',
 );
 
 

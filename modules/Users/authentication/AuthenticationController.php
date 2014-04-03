@@ -2,7 +2,7 @@
 if(!defined('sugarEntry') || !sugarEntry) die('Not A Valid Entry Point');
 /*********************************************************************************
  * SugarCRM Community Edition is a customer relationship management program developed by
- * SugarCRM, Inc. Copyright (C) 2004-2012 SugarCRM Inc.
+ * SugarCRM, Inc. Copyright (C) 2004-2013 SugarCRM Inc.
  * 
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Affero General Public License version 3 as published by the
@@ -37,26 +37,46 @@ if(!defined('sugarEntry') || !sugarEntry) die('Not A Valid Entry Point');
 
 
 
-class AuthenticationController 
+class AuthenticationController
 {
 	public $loggedIn = false; //if a user has attempted to login
 	public $authenticated = false;
 	public $loginSuccess = false;// if a user has successfully logged in
-	
+
 	protected static $authcontrollerinstance = null;
+
+    /**
+     * @var SugarAuthenticate
+     */
+    public $authController;
 
 	/**
 	 * Creates an instance of the authentication controller and loads it
 	 *
-	 * @param STRING $type - the authentication Controller - default to SugarAuthenticate
+	 * @param STRING $type - the authentication Controller
 	 * @return AuthenticationController -
 	 */
-	public function __construct($type = 'SugarAuthenticate') 
+	public function __construct($type = null)
 	{
-	    if ($type == 'SugarAuthenticate' && !empty($GLOBALS['system_config']->settings['system_ldap_enabled']) && empty($_SESSION['sugar_user'])){
-			$type = 'LDAPAuthenticate';
+        $this->authController = $this->getAuthController($type);
+	}
+
+    /**
+     * Get auth controller object
+     * @param string $type 
+     * @return SugarAuthenticate
+     */
+    protected function getAuthController($type)
+    {
+        if (!$type) {
+            $type = !empty($GLOBALS['sugar_config']['authenticationClass'])
+                ? $GLOBALS['sugar_config']['authenticationClass'] : 'SugarAuthenticate';
         }
-	    
+
+        if ($type == 'SugarAuthenticate' && !empty($GLOBALS['system_config']->settings['system_ldap_enabled']) && empty($_SESSION['sugar_user'])) {
+            $type = 'LDAPAuthenticate';
+        }
+
         // check in custom dir first, in case someone want's to override an auth controller
 		if (file_exists('custom/modules/Users/authentication/'.$type.'/' . $type . '.php')) {
             require_once('custom/modules/Users/authentication/'.$type.'/' . $type . '.php');
@@ -67,10 +87,13 @@ class AuthenticationController
             $type = 'SugarAuthenticate';
         }
 
-        $this->authController = new $type();
-        $this->authController->pre_login();
-	}
+        if (!empty($_REQUEST['no_saml']) 
+            && (is_subclass_of($type, 'SAMLAuthenticate') || 'SAMLAuthenticate' == $type)) {
+            $type = 'SugarAuthenticate';
+        }
 
+        return new $type();
+    }
 
 	/**
 	 * Returns an instance of the authentication controller
@@ -78,12 +101,12 @@ class AuthenticationController
 	 * @param string $type this is the type of authetnication you want to use default is SugarAuthenticate
 	 * @return an instance of the authetnciation controller
 	 */
-	public static function getInstance($type = 'SugarAuthenticate')
+	public static function getInstance($type = null)
 	{
 		if (empty(self::$authcontrollerinstance)) {
 			self::$authcontrollerinstance = new AuthenticationController($type);
 		}
-		
+
 		return self::$authcontrollerinstance;
 	}
 
@@ -95,7 +118,7 @@ class AuthenticationController
 	 * @param array $PARAMS
 	 * @return boolean true if the user successfully logs in or false otherwise.
 	 */
-	public function login($username, $password, $PARAMS = array()) 
+	public function login($username, $password, $PARAMS = array())
 	{
 		//kbrill bug #13225
 		$_SESSION['loginAttempts'] = (isset($_SESSION['loginAttempts']))? $_SESSION['loginAttempts'] + 1: 1;
@@ -114,7 +137,7 @@ class AuthenticationController
 			loginLicense();
 			if(!empty($GLOBALS['login_error'])){
 				unset($_SESSION['authenticated_user_id']);
-				$GLOBALS['log']->fatal('FAILED LOGIN: potential hack attempt');
+				$GLOBALS['log']->fatal('FAILED LOGIN: potential hack attempt:'.$GLOBALS['login_error']);
 				$this->loginSuccess = false;
 				return false;
 			}
@@ -163,7 +186,7 @@ class AuthenticationController
 	 *
 	 * @return booelan
 	 */
-	public function sessionAuthenticate() 
+	public function sessionAuthenticate()
 	{
 		if(!$this->authenticated){
 			$this->authenticated = $this->authController->sessionAuthenticate();

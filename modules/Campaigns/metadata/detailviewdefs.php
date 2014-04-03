@@ -1,7 +1,7 @@
 <?php
 /*********************************************************************************
  * SugarCRM Community Edition is a customer relationship management program developed by
- * SugarCRM, Inc. Copyright (C) 2004-2012 SugarCRM Inc.
+ * SugarCRM, Inc. Copyright (C) 2004-2013 SugarCRM Inc.
  * 
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Affero General Public License version 3 as published by the
@@ -140,7 +140,7 @@ $viewdefs['Campaigns']['DetailView'] = array(
 	    ),
 	    array(
           	'name' => 'frequency',
-          	'customCode' => '{if $fields.campaign_type.value == "NewsLetter"}<div style=\'none\' id=\'freq_field\'>{$fields.frequency.value}</div>{/if}&nbsp;',
+          	'customCode' => '{if $fields.campaign_type.value == "NewsLetter"}<div style=\'none\' id=\'freq_field\'>{$APP_LIST.newsletter_frequency_dom[$fields.frequency.value]}</div>{/if}&nbsp;',
           	'customLabel' => '{if $fields.campaign_type.value == "NewsLetter"}<div style=\'none\' id=\'freq_label\'>{$MOD.LBL_CAMPAIGN_FREQUENCY}</div>{/if}&nbsp;'
           ),
 	  ),

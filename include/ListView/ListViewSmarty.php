@@ -2,7 +2,7 @@
 if(!defined('sugarEntry') || !sugarEntry) die('Not A Valid Entry Point');
 /*********************************************************************************
  * SugarCRM Community Edition is a customer relationship management program developed by
- * SugarCRM, Inc. Copyright (C) 2004-2012 SugarCRM Inc.
+ * SugarCRM, Inc. Copyright (C) 2004-2013 SugarCRM Inc.
  * 
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Affero General Public License version 3 as published by the
@@ -203,6 +203,7 @@ class ListViewSmarty extends ListViewDisplay{
 		if(!$this->should_process) return $GLOBALS['app_strings']['LBL_SEARCH_POPULATE_ONLY'];
         global $app_strings, $sugar_version, $sugar_flavor, $server_unique_key, $currentModule, $app_list_strings;
         $this->ss->assign('moduleListSingular', $app_list_strings["moduleListSingular"]);
+        $this->ss->assign('moduleList', $app_list_strings['moduleList']);
         $this->ss->assign('data', $this->data['data']);
         $this->ss->assign('query', $this->data['query']);
         $this->ss->assign('sugar_info', array("sugar_version" => $sugar_version, 

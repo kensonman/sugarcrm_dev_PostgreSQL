@@ -1,7 +1,7 @@
 <?php
 /*********************************************************************************
  * SugarCRM Community Edition is a customer relationship management program developed by
- * SugarCRM, Inc. Copyright (C) 2004-2012 SugarCRM Inc.
+ * SugarCRM, Inc. Copyright (C) 2004-2013 SugarCRM Inc.
  * 
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Affero General Public License version 3 as published by the
@@ -98,9 +98,11 @@ class SearchForm {
         //require_once('modules/' . $module . '/metadata/SearchFields.php');
         $this->searchFields = $searchFields[$module];
         if(empty($tpl)) {
-            $this->tpl = 'modules/' . $module . '/SearchForm.html';
             if(!empty($GLOBALS['layout_edit_mode'])){
             	 $this->tpl = sugar_cached('studio/custom/working/modules/' . $module . '/SearchForm.html');
+            }
+            else {
+             	 $this->tpl = get_custom_file_if_exists('modules/' . $module . '/SearchForm.html');
             }
         }
         else {

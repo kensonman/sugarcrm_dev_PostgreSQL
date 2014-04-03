@@ -2,7 +2,7 @@
 if(!defined('sugarEntry') || !sugarEntry) die('Not A Valid Entry Point');
 /*********************************************************************************
  * SugarCRM Community Edition is a customer relationship management program developed by
- * SugarCRM, Inc. Copyright (C) 2004-2012 SugarCRM Inc.
+ * SugarCRM, Inc. Copyright (C) 2004-2013 SugarCRM Inc.
  * 
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Affero General Public License version 3 as published by the
@@ -354,6 +354,24 @@ class SugarAuthenticate{
      */
     function pre_login()
     {
+        if (isset($_SESSION['authenticated_user_id']))
+        {
+            ob_clean();
+            // fixing bug #46837: Previosly links/URLs to records in Sugar from MSO Excel/Word were referred to the home screen and not the record
+            // It used to appear when default browser was not MS IE
+            header("Location: ".$GLOBALS['app']->getLoginRedirect());
+            sugar_cleanup(true);
+        }
     }
 
+    /**
+     * Redirect to login page
+     * 
+     * @param SugarApplication $app
+     */
+    public function redirectToLogin(SugarApplication $app)
+    {
+        $loginVars = $app->createLoginVars();
+        $app->redirect('index.php?action=Login&module=Users' . $loginVars);
+    }
 }

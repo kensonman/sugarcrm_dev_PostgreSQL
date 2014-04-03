@@ -2,7 +2,7 @@
 if(!defined('sugarEntry') || !sugarEntry) die('Not A Valid Entry Point');
 /*********************************************************************************
  * SugarCRM Community Edition is a customer relationship management program developed by
- * SugarCRM, Inc. Copyright (C) 2004-2012 SugarCRM Inc.
+ * SugarCRM, Inc. Copyright (C) 2004-2013 SugarCRM Inc.
  * 
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Affero General Public License version 3 as published by the
@@ -61,7 +61,7 @@ class ModuleInstaller{
 	var $base_dir  = '';
 	var $modulesInPackage = array();
 	public $disabled_path = DISABLED_PATH;
-
+    public $id_name;
 	function ModuleInstaller(){
 		$this->ms = new ModuleScanner();
 		$this->modules = get_module_dir_list();
@@ -81,7 +81,8 @@ class ModuleInstaller{
     */
 	function install($base_dir, $is_upgrade = false, $previous_version = ''){
 		if(defined('TEMPLATE_URL'))SugarTemplateUtilities::disableCache();
-		if(!empty($GLOBALS['sugar_config']['moduleInstaller']['packageScan'])){
+        if ((defined('MODULE_INSTALLER_PACKAGE_SCAN') && MODULE_INSTALLER_PACKAGE_SCAN)
+            || !empty($GLOBALS['sugar_config']['moduleInstaller']['packageScan'])) {
 			$this->ms->scanPackage($base_dir);
 			if($this->ms->hasIssues()){
 				$this->ms->displayIssues();
@@ -267,7 +268,7 @@ class ModuleInstaller{
 	function install_copy(){
 		if(isset($this->installdefs['copy'])){
 			/* BEGIN - RESTORE POINT - by MR. MILK August 31, 2005 02:22:11 PM */
-			$backup_path = clean_path( remove_file_extension(urldecode(hashToFile($_REQUEST['install_file'])))."-restore" );
+			$backup_path = clean_path( remove_file_extension(urldecode($_REQUEST['install_file']))."-restore" );
 			/* END - RESTORE POINT - by MR. MILK August 31, 2005 02:22:18 PM */
 			foreach($this->installdefs['copy'] as $cp){
 				$GLOBALS['log']->debug("Copying ..." . $cp['from'].  " to " .$cp['to'] );
@@ -534,7 +535,155 @@ class ModuleInstaller{
 		}
     }
 
-	public function install_extensions()
+    /**
+     * Method removes module from global search configurations
+     *
+     * return bool
+     */
+    public function uninstall_global_search()
+    {
+        if (empty($this->installdefs['beans']))
+        {
+            return true;
+        }
+
+        if (is_file('custom/modules/unified_search_modules_display.php') == false)
+        {
+            return true;
+        }
+
+        $user = new User();
+        $users = get_user_array();
+        $unified_search_modules_display = array();
+        require('custom/modules/unified_search_modules_display.php');
+
+        foreach($this->installdefs['beans'] as $beanDefs)
+        {
+            if (array_key_exists($beanDefs['module'], $unified_search_modules_display) == false)
+            {
+                continue;
+            }
+            unset($unified_search_modules_display[$beanDefs['module']]);
+            foreach($users as $userId => $userName)
+            {
+                if (empty($userId))
+                {
+                    continue;
+                }
+                $user->retrieve($userId);
+                $prefs = $user->getPreference('globalSearch', 'search');
+                if (array_key_exists($beanDefs['module'], $prefs) == false)
+                {
+                    continue;
+                }
+                unset($prefs[$beanDefs['module']]);
+                $user->setPreference('globalSearch', $prefs, 0, 'search');
+                $user->savePreferencesToDB();
+            }
+        }
+
+        if (write_array_to_file("unified_search_modules_display", $unified_search_modules_display, 'custom/modules/unified_search_modules_display.php') == false)
+        {
+            global $app_strings;
+            $msg = string_format($app_strings['ERR_FILE_WRITE'], array('custom/modules/unified_search_modules_display.php'));
+            $GLOBALS['log']->error($msg);
+            throw new Exception($msg);
+            return false;
+        }
+        return true;
+    }
+
+    /**
+     * Method enables module in global search configurations by disabled_module_visible key
+     *
+     * return bool
+     */
+    public function enable_global_search()
+    {
+        if (empty($this->installdefs['beans']))
+        {
+            return true;
+        }
+
+        if (is_file('custom/modules/unified_search_modules_display.php') == false)
+        {
+            return true;
+        }
+
+        $unified_search_modules_display = array();
+        require('custom/modules/unified_search_modules_display.php');
+
+        foreach($this->installdefs['beans'] as $beanDefs)
+        {
+            if (array_key_exists($beanDefs['module'], $unified_search_modules_display) == false)
+            {
+                continue;
+            }
+            if (isset($unified_search_modules_display[$beanDefs['module']]['disabled_module_visible']) == false)
+            {
+                continue;
+            }
+            $unified_search_modules_display[$beanDefs['module']]['visible'] = $unified_search_modules_display[$beanDefs['module']]['disabled_module_visible'];
+            unset($unified_search_modules_display[$beanDefs['module']]['disabled_module_visible']);
+        }
+
+        if (write_array_to_file("unified_search_modules_display", $unified_search_modules_display, 'custom/modules/unified_search_modules_display.php') == false)
+        {
+            global $app_strings;
+            $msg = string_format($app_strings['ERR_FILE_WRITE'], array('custom/modules/unified_search_modules_display.php'));
+            $GLOBALS['log']->error($msg);
+            throw new Exception($msg);
+            return false;
+        }
+        return true;
+    }
+
+    /**
+     * Method disables module in global search configurations by disabled_module_visible key
+     *
+     * return bool
+     */
+    public function disable_global_search()
+    {
+        if (empty($this->installdefs['beans']))
+        {
+            return true;
+        }
+
+        if (is_file('custom/modules/unified_search_modules_display.php') == false)
+        {
+            return true;
+        }
+
+        $unified_search_modules_display = array();
+        require('custom/modules/unified_search_modules_display.php');
+
+        foreach($this->installdefs['beans'] as $beanDefs)
+        {
+            if (array_key_exists($beanDefs['module'], $unified_search_modules_display) == false)
+            {
+                continue;
+            }
+            if (isset($unified_search_modules_display[$beanDefs['module']]['visible']) == false)
+            {
+                continue;
+            }
+            $unified_search_modules_display[$beanDefs['module']]['disabled_module_visible'] = $unified_search_modules_display[$beanDefs['module']]['visible'];
+            $unified_search_modules_display[$beanDefs['module']]['visible'] = false;
+        }
+
+        if (write_array_to_file("unified_search_modules_display", $unified_search_modules_display, 'custom/modules/unified_search_modules_display.php') == false)
+        {
+            global $app_strings;
+            $msg = string_format($app_strings['ERR_FILE_WRITE'], array('custom/modules/unified_search_modules_display.php'));
+            $GLOBALS['log']->error($msg);
+            throw new Exception($msg);
+            return false;
+        }
+        return true;
+    }
+
+    public function install_extensions()
 	{
 	    foreach($this->extensions as $extname => $ext) {
 	        $install = "install_$extname";
@@ -774,20 +923,33 @@ class ModuleInstaller{
                 $languages[$packs['language']] = $packs['language'];
 				$packs['from'] = str_replace('<basepath>', $this->base_dir, $packs['from']);
 				$GLOBALS['log']->debug("Installing Language Pack ..." . $packs['from']  .  " for " .$packs['to_module']);
-			    $path = 'custom/Extension/modules/' . $packs['to_module']. '/Ext/Language';
-				if($packs['to_module'] == 'application'){
-				    $path ='custom/Extension/' . $packs['to_module']. '/Ext/Language';
-				}
-
-				if(!file_exists($path)){
-				    mkdir_recursive($path, true);
+                $path = $this->getInstallLanguagesPath($packs);
+                if (!file_exists(dirname($path))) {
+                    mkdir_recursive(dirname($path), true);
                 }
-				copy_recursive($packs['from'] , $path.'/'.$packs['language'].'.'. $this->id_name . '.php');
+                copy_recursive($packs['from'], $path);
+
 			}
 			$this->rebuild_languages($languages, $modules);
 
 		}
 	}
+
+    /**
+     * Function return path to file where store label
+     * 
+     * @param $packs
+     * @return string
+     */
+    protected function getInstallLanguagesPath($packs)
+    {
+        $path = 'custom/Extension/modules/' . $packs['to_module']. '/Ext/Language';
+        if($packs['to_module'] == 'application'){
+            $path ='custom/Extension/' . $packs['to_module']. '/Ext/Language';
+        }
+        $path .= '/'.$packs['language'].'.'. $this->id_name . '.php';
+        return $path;
+    }
 
     // Non-standard, needs special rebuild
 	function uninstall_languages(){
@@ -927,6 +1089,119 @@ class ModuleInstaller{
         foreach($this->installdefs['logic_hooks'] as $hook ) {
             remove_logic_hook($hook['module'], $hook['hook'], array($hook['order'], $hook['description'],  $hook['file'], $hook['class'], $hook['function']));
         }
+    }
+
+    /**
+     * Check labels inside label files and remove them
+     * 
+     * @param $basePath - path to files with labels
+     * @param array $labelDefinitions - format like output from AbstractRelationship buildLabels()
+     */
+    public function uninstallLabels($basePath, $labelDefinitions)
+    {
+
+        foreach ($labelDefinitions as $definition) {
+
+            $filename = $basePath . "{$definition['module']}.php";
+
+            if (!file_exists($filename)) {
+                continue;
+            }
+
+            $uninstalLabes = $this->getLabelsToUninstall($labelDefinitions);
+            $this->uninstallLabel($uninstalLabes, $definition, $filename);
+        }
+
+    }
+
+    /**
+     * Check labels inside label file and remove them
+     * 
+     * @param $uninstalLabes
+     * @param $definition
+     * @param $filename
+     */
+    protected function uninstallLabel($uninstalLabes, $definition, $filename)
+    {
+        $app_list_strings = array();
+        $mod_strings = array();
+        $stringsName = $definition['module'] == 'application' ? 'app_list_strings' : 'mod_strings';
+
+        include($filename);
+        if ('app_list_strings' == $stringsName) {
+            $strings = $app_list_strings;
+        } else {
+            $strings = $mod_strings;
+        }
+
+        foreach ($uninstalLabes AS $label) {
+            if (isset($strings[$label])) {
+                unset($strings[$label]);
+            }
+        }
+
+        if (count($strings)) {
+            $this->saveContentToFile($filename, $stringsName, $strings);
+        } else {
+            unlink($filename);
+        }
+    }
+
+    /**
+     * Save labels that not need be uninstalled at this case
+     * 
+     * @param $filename
+     * @param $stringsName
+     * @param $strings
+     */
+    protected function saveContentToFile($filename, $stringsName, $strings)
+    {
+        $fileContent = "<?php\n//THIS FILE IS AUTO GENERATED, DO NOT MODIFY\n";
+        foreach ($strings as $key => $val) {
+            $fileContent .= override_value_to_string_recursive2($stringsName, $key, $val);
+        }
+        sugar_file_put_contents($filename, $fileContent);
+    }
+
+    /**
+     * Uninstall extend labels
+     * 
+     * @param $labelDefinitions
+     */
+    public function uninstallExtLabels($labelDefinitions)
+    {
+        foreach ($labelDefinitions as $definition) {
+            if (!isset($GLOBALS['sugar_config']['languages']) || !is_array($GLOBALS['sugar_config']['languages'])) {
+                continue;
+            }
+            
+            foreach (array_keys($GLOBALS['sugar_config']['languages']) AS $language) {
+                $pathDef = array(
+                    'language' => $language,
+                    'to_module' => $definition['module']
+                );
+                $path = $this->getInstallLanguagesPath($pathDef);
+                if (file_exists($path)) {
+                    unlink($path);
+                }
+            }
+        }
+
+    }
+
+    /**
+     * Returns the names of the label(key 'system_label') from a multi-dimensional array $labelDefinitions
+     * 
+     * @param $labelDefinitions
+     * @return array of labels
+     */
+    protected function getLabelsToUninstall($labelDefinitions)
+    {
+        $labels = array();
+        foreach($labelDefinitions AS $definition){
+            $labels[] = $definition['system_label'];
+        }
+        return $labels;
     }
 
 /* BEGIN - RESTORE POINT - by MR. MILK August 31, 2005 02:22:18 PM */
@@ -1205,8 +1480,28 @@ class ModuleInstaller{
 					{
 						rmdir_recursive( $path );
 					}
+                    $path = $basepath . "WirelessLayoutdefs/$fn";
+                    if (file_exists($path)) {
+                        rmdir_recursive($path);
+                    }
 				}
-			}
+                $relationships_path = 'custom/Extension/modules/relationships/';
+
+                $relationships_dirs = array(
+                    'layoutdefs',
+                    'vardefs',
+                    'wirelesslayoutdefs'
+                );
+                foreach ($relationships_dirs as $relationship_dir) {
+                    $realtionship_file_path = $relationships_path . $relationship_dir . "/{$rel_name}_{$mod}.php";
+                    if (file_exists($realtionship_file_path)) {
+                        rmdir_recursive($realtionship_file_path);
+                    }
+                }
+                if (file_exists($relationships_path . "relationships/{$rel_name}MetaData.php")) {
+                    rmdir_recursive($relationships_path . "relationships/{$rel_name}MetaData.php");
+                }
+            }
 
 			foreach (array($filename , "custom" . $filename, $rel_name ."_". $mod. ".php") as $fn) {
 				// remove the table dictionary extension
@@ -1328,6 +1623,7 @@ class ModuleInstaller{
 			'uninstall_connectors',
 			'uninstall_layoutfields',
 		    'uninstall_extensions',
+            'uninstall_global_search',
 			'disable_manifest_logichooks',
 			'post_uninstall',
 		);
@@ -1883,6 +2179,7 @@ private function dir_file_count($path){
 								'enable_dashlets',
 								'enable_relationships',
 		                        'enable_extensions',
+                                'enable_global_search',
 		                        'enable_manifest_logichooks',
 								'reset_opcodes',
 		);
@@ -1952,6 +2249,7 @@ private function dir_file_count($path){
 							'disable_dashlets',
 							'disable_relationships',
 		                    'disable_extensions',
+                            'disable_global_search',
 							'disable_manifest_logichooks',
 							'reset_opcodes',
 							);

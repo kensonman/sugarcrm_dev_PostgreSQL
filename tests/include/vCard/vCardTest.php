@@ -1,7 +1,7 @@
 <?php
 /*********************************************************************************
  * SugarCRM Community Edition is a customer relationship management program developed by
- * SugarCRM, Inc. Copyright (C) 2004-2012 SugarCRM Inc.
+ * SugarCRM, Inc. Copyright (C) 2004-2013 SugarCRM Inc.
  * 
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Affero General Public License version 3 as published by the
@@ -41,22 +41,17 @@ class vCardTest extends Sugar_PHPUnit_Framework_TestCase
 {
     public function setUp()
     {
-        $GLOBALS['current_user'] = SugarTestUserUtilities::createAnonymousUser();
-        $beanList = array();
-        $beanFiles = array();
-        require('include/modules.php');
-        $GLOBALS['beanList'] = $beanList;
-        $GLOBALS['beanFiles'] = $beanFiles;
+        SugarTestHelper::setUp('beanFiles');
+        SugarTestHelper::setUp('beanList');
+        SugarTestHelper::setUp('current_user');
+        SugarTestHelper::setUp('app_list_strings');
         $GLOBALS['beanList']['vCardMockModule'] = 'vCardMockModule';
         $GLOBALS['beanFiles']['vCardMockModule'] = 'tests/include/vCard/vCardTest.php';
     }
 
     public function tearDown()
     {
-        unset($GLOBALS['current_user']);
-        unset($GLOBALS['beanList']);
-        unset($GLOBALS['beanFiles']);
-        SugarTestUserUtilities::removeAllCreatedAnonymousUsers();
+        SugarTestHelper::tearDown();
     }
 
     /**

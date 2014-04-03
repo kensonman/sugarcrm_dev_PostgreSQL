@@ -2,7 +2,7 @@
 
 /*********************************************************************************
  * SugarCRM Community Edition is a customer relationship management program developed by
- * SugarCRM, Inc. Copyright (C) 2004-2012 SugarCRM Inc.
+ * SugarCRM, Inc. Copyright (C) 2004-2013 SugarCRM Inc.
  * 
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Affero General Public License version 3 as published by the
@@ -353,6 +353,12 @@ function threeWayMerge(){
 ////	END UTILITIES THAT MUST BE LOCAL :(
 ///////////////////////////////////////////////////////////////////////////////
 
+//Bug 52872. Dies if the request does not come from CLI.
+$sapi_type = php_sapi_name();
+if (substr($sapi_type, 0, 3) != 'cli') {
+    die("This is command-line only script");
+}
+//End of #52872
 
 // only run from command line
 if(isset($_SERVER['HTTP_USER_AGENT'])) {

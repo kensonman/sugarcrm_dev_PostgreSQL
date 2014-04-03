@@ -1,7 +1,7 @@
 <?php
 /*********************************************************************************
  * SugarCRM Community Edition is a customer relationship management program developed by
- * SugarCRM, Inc. Copyright (C) 2004-2012 SugarCRM Inc.
+ * SugarCRM, Inc. Copyright (C) 2004-2013 SugarCRM Inc.
  * 
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Affero General Public License version 3 as published by the
@@ -149,7 +149,7 @@ class EditView
                 die();
             }
 
-            require_once("modules/$this->module/metadata/editviewdefs.php");
+            require("modules/$this->module/metadata/editviewdefs.php");
         }
 
         $this->defs = $viewdefs[$this->module][$this->view];
@@ -430,6 +430,11 @@ class EditView
                 $this->focus->assigned_user_name = get_assigned_user_name($this->focus->assigned_user_id);
             }
 
+            if (!empty($this->focus->job) && $this->focus->job_function == '')
+            {
+                $this->focus->job_function = $this->focus->job;
+            }
+
             foreach ($this->focus->toArray() as $name => $value)
             {
                 $valueFormatted = false;
@@ -449,16 +454,21 @@ class EditView
 
                 if (isset($this->fieldDefs[$name]['options']) && isset($app_list_strings[$this->fieldDefs[$name]['options']]))
                 {
-                    $this->fieldDefs[$name]['options'] = $app_list_strings[$this->fieldDefs[$name]['options']];
                     if(isset($GLOBALS['sugar_config']['enable_autocomplete']) && $GLOBALS['sugar_config']['enable_autocomplete'] == true)
                     {
 						$this->fieldDefs[$name]['autocomplete'] = true;
 	                	$this->fieldDefs[$name]['autocomplete_options'] = $this->fieldDefs[$name]['options']; // we need the name for autocomplete
 					} else {
                         $this->fieldDefs[$name]['autocomplete'] = false;
-                   }
+                   	}
+                   	// Bug 57472 - $this->fieldDefs[$name]['autocomplete_options' was set too late, it didn't retrieve the list's name, but the list itself (the developper comment show us that developper expected to retrieve list's name and not the options array)
+                   	$this->fieldDefs[$name]['options'] = $app_list_strings[$this->fieldDefs[$name]['options']];
                 }
 
+                if(isset($this->fieldDefs[$name]['options']) && is_array($this->fieldDefs[$name]['options']) && isset($this->fieldDefs[$name]['default_empty']) && !isset($this->fieldDefs[$name]['options'][$this->fieldDefs[$name]['default_empty']])) {
+                    $this->fieldDefs[$name]['options'] = array_merge(array($this->fieldDefs[$name]['default_empty']=>$this->fieldDefs[$name]['default_empty']), $this->fieldDefs[$name]['options']);
+                }
+                                
 	       	 	if(isset($this->fieldDefs[$name]['function'])) {
 	       	 		$function = $this->fieldDefs[$name]['function'];
 	       			if(is_array($function) && isset($function['name'])){
@@ -591,7 +601,7 @@ class EditView
         $this->th->ss->assign('returnId', $this->returnId);
         $this->th->ss->assign('isDuplicate', $this->isDuplicate);
         $this->th->ss->assign('def', $this->defs);
-        $this->th->ss->assign('useTabs', isset($this->defs['templateMeta']['useTabs']) ? $this->defs['templateMeta']['useTabs'] : false);
+        $this->th->ss->assign('useTabs', isset($this->defs['templateMeta']['useTabs']) && isset($this->defs['templateMeta']['tabDefs']) ? $this->defs['templateMeta']['useTabs'] : false);
         $this->th->ss->assign('maxColumns', isset($this->defs['templateMeta']['maxColumns']) ? $this->defs['templateMeta']['maxColumns'] : 2);
         $this->th->ss->assign('module', $this->module);
         $this->th->ss->assign('headerTpl', isset($this->defs['templateMeta']['form']['headerTpl']) ? $this->defs['templateMeta']['form']['headerTpl'] : 'include/' . $this->view . '/header.tpl');
@@ -600,6 +610,7 @@ class EditView
         $this->th->ss->assign('bean', $this->focus);
         $this->th->ss->assign('isAuditEnabled', $this->focus->is_AuditEnabled());
         $this->th->ss->assign('gridline',$current_user->getPreference('gridline') == 'on' ? '1' : '0');
+        $this->th->ss->assign('tabDefs', isset($this->defs['templateMeta']['tabDefs']) ? $this->defs['templateMeta']['tabDefs'] : false);
         $this->th->ss->assign('VERSION_MARK', getVersionedPath(''));
 
         global $js_custom_version;

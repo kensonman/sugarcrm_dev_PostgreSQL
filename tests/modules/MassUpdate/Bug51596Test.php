@@ -1,7 +1,7 @@
 <?php
 /*********************************************************************************
  * SugarCRM Community Edition is a customer relationship management program developed by
- * SugarCRM, Inc. Copyright (C) 2004-2012 SugarCRM Inc.
+ * SugarCRM, Inc. Copyright (C) 2004-2013 SugarCRM Inc.
  * 
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Affero General Public License version 3 as published by the
@@ -41,45 +41,47 @@
 class Bug51596Test extends Sugar_PHPUnit_Framework_TestCase
 {
     /**
-* @var Contact
-*/
+    * @var Contact
+    */
     protected $contact1,
         $contact2;
 
     /**
-* @var Account
-*/
+     * @var Account
+     * @var Account
+     */
     protected $account1,
         $account2;
 
     protected $field_name = 'bug51596test';
 
     /**
-* Sets up the fixture, for example, open a network connection.
-* This method is called before a test is executed.
-*
-* @return void
-*/
+    * Sets up the fixture, for example, open a network connection.
+    * This method is called before a test is executed.
+    *
+    * @return void
+    */
     public function setUp()
     {
-        $this->markTestIncomplete("Disabling broken test on CI. Working with Sergei to get it fixed");
-
-        $GLOBALS['current_user'] = SugarTestUserUtilities::createAnonymousUser(true, true);
+        SugarTestHelper::setUp('mod_strings', array('Administration'));
+        SugarTestHelper::setUp('current_user', array(true, true));
+        SugarTestHelper::setUp('beanFiles');
+        SugarTestHelper::setUp('beanList');
 
         // add an extra relationship that will be used for search
         self::registerExtension('Contacts', 'bug51596test.php', array(
             'Contact' => array(
                 'fields' => array(
                     $this->field_name => array (
-                        'name' => $this->field_name,
-                        'rname' => 'name',
-                        'id_name' => 'account_id',
+                        'name'      => $this->field_name,
+                        'rname'     => 'name',
+                        'id_name'   => 'account_id',
                         'join_name' => 'accounts',
-                        'type' => 'relate',
-                        'link' => 'accounts',
-                        'table' => 'accounts',
-                        'module' => 'Accounts',
-                        'source' => 'non-db',
+                        'type'      => 'relate',
+                        'link'      => 'accounts',
+                        'table'     => 'accounts',
+                        'module'    => 'Accounts',
+                        'source'    => 'non-db',
                     ),
                 ),
             ),
@@ -87,6 +89,7 @@ class Bug51596Test extends Sugar_PHPUnit_Framework_TestCase
 
         // this is needed for newly created extension to be loaded for new beans
         $_SESSION['developerMode'] = true;
+        $GLOBALS['reload_vardefs'] = true;
 
         // create a set of contacts and related accounts
         $this->contact1 = new Contact();
@@ -118,17 +121,17 @@ class Bug51596Test extends Sugar_PHPUnit_Framework_TestCase
 
         // will update "do_not_call" attribute of found contacts
         $_REQUEST['massupdate'] = 'true';
-        $_REQUEST['entire'] = true;
-        $_REQUEST['module'] = 'Contacts';
-        $_POST['do_not_call'] = 1;
+        $_REQUEST['entire']     = true;
+        $_REQUEST['module']     = 'Contacts';
+        $_POST['do_not_call']   = 1;
     }
 
     /**
-* Tears down the fixture, for example, close a network connection.
-* This method is called after a test is executed.
-*
-* @return void
-*/
+     * Tears down the fixture, for example, close a network connection.
+     * This method is called after a test is executed.
+     *
+     * @return void
+     */
     public function tearDown()
     {
         unset($_REQUEST['massupdate'], $_REQUEST['entire'], $_REQUEST['module'], $_POST['do_not_call']);
@@ -155,15 +158,16 @@ class Bug51596Test extends Sugar_PHPUnit_Framework_TestCase
         self::unregisterExtension('Contacts', 'bug51596test.php');
         SugarTestUserUtilities::removeAllCreatedAnonymousUsers();
 
-        unset($_SESSION['developerMode']);
+        unset($GLOBALS['reload_vardefs'], $_SESSION['developerMode']);
+        SugarTestHelper::tearDown();
     }
 
     /**
-* Verifies that objects are found and updated by name of custom related
-* object
-*
-* @return void
-*/
+     * Verifies that objects are found and updated by name of custom related
+     * object
+     *
+     * @return void
+     */
     public function testSearchAndUpdate()
     {
         $contact = new Contact();
@@ -174,7 +178,7 @@ class Bug51596Test extends Sugar_PHPUnit_Framework_TestCase
 
         // search for contacts related to Bug51596Test_Account1 (e.g. Contact1)
         $current_query_by_page = array (
-            'searchFormTab' => 'basic_search',
+            'searchFormTab'              => 'basic_search',
             $this->field_name . '_basic' => 'Bug51596Test_Account1',
         );
 
@@ -193,14 +197,14 @@ class Bug51596Test extends Sugar_PHPUnit_Framework_TestCase
     }
 
     /**
-* Utility function. Registers vardef extension for specified module.
-*
-* @static
-* @param string $module
-* @param string $filename
-* @param array $data
-* @return void
-*/
+     * Utility function. Registers vardef extension for specified module.
+     *
+     * @static
+     * @param string $module
+     * @param string $filename
+     * @param array $data
+     * @return void
+     */
     protected static function registerExtension($module, $filename, array $data)
     {
         $directory = 'custom/Extension/modules/' . $module . '/Ext/Vardefs';
@@ -224,13 +228,13 @@ HERE;
     }
 
     /**
-* Utility function. Unregisters vardef extension for specified module.
-*
-* @static
-* @param string $module
-* @param string $filename
-* @return void
-*/
+     * Utility function. Unregisters vardef extension for specified module.
+     *
+     * @static
+     * @param string $module
+     * @param string $filename
+     * @return void
+     */
     protected static function unregisterExtension($module, $filename)
     {
         $directory = 'custom/Extension/modules/' . $module . '/Ext/Vardefs';
@@ -247,15 +251,16 @@ HERE;
     }
 
     /**
-* Utility function. Rebuilds extensions for specified module.
-*
-* @static
-* @param string $module
-* @return void
-*/
+     * Utility function. Rebuilds extensions for specified module.
+     *
+     * @static
+     * @param string $module
+     * @return void
+     */
     protected static function rebuildExtensions($module)
     {
         $rc = new RepairAndClear();
         $rc->repairAndClearAll(array('rebuildExtensions'), array($module), false, false);
     }
+
 }

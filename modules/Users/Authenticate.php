@@ -2,7 +2,7 @@
 if(!defined('sugarEntry') || !sugarEntry) die('Not A Valid Entry Point');
 /*********************************************************************************
  * SugarCRM Community Edition is a customer relationship management program developed by
- * SugarCRM, Inc. Copyright (C) 2004-2012 SugarCRM Inc.
+ * SugarCRM, Inc. Copyright (C) 2004-2013 SugarCRM Inc.
  * 
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Affero General Public License version 3 as published by the
@@ -47,7 +47,14 @@ if (!defined('SUGAR_PHPUNIT_RUNNER')) {
 }
 global $mod_strings;
 $login_vars = $GLOBALS['app']->getLoginVars(false);
-$authController->login($_REQUEST['user_name'], $_REQUEST['user_password']);
+
+$user_name = isset($_REQUEST['user_name'])
+    ? $_REQUEST['user_name'] : '';
+
+$password = isset($_REQUEST['user_password'])
+    ? $_REQUEST['user_password'] : '';
+
+$authController->login($user_name, $password);
 // authController will set the authenticated_user_id session variable
 if(isset($_SESSION['authenticated_user_id'])) {
 	// Login is successful

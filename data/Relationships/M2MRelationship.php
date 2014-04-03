@@ -2,7 +2,7 @@
 if(!defined('sugarEntry') || !sugarEntry) die('Not A Valid Entry Point');
 /*********************************************************************************
  * SugarCRM Community Edition is a customer relationship management program developed by
- * SugarCRM, Inc. Copyright (C) 2004-2012 SugarCRM Inc.
+ * SugarCRM, Inc. Copyright (C) 2004-2013 SugarCRM Inc.
  * 
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Affero General Public License version 3 as published by the
@@ -141,6 +141,12 @@ class M2MRelationship extends SugarRelationship
             return false;
         }
 
+            $lhs->$lhsLinkName->addBean($rhs);
+            $rhs->$rhsLinkName->addBean($lhs);
+
+            $this->callBeforeAdd($lhs, $rhs, $lhsLinkName);
+            $this->callBeforeAdd($rhs, $lhs, $rhsLinkName);
+
         //Many to many has no additional logic, so just add a new row to the table and notify the beans.
         $dataToInsert = $this->getRowToInsert($lhs, $rhs, $additionalFields);
 
@@ -154,6 +160,8 @@ class M2MRelationship extends SugarRelationship
 
             $this->callAfterAdd($lhs, $rhs, $lhsLinkName);
             $this->callAfterAdd($rhs, $lhs, $rhsLinkName);
+
+        return true;
     }
 
     protected function getRowToInsert($lhs, $rhs, $additionalFields = array())
@@ -234,6 +242,21 @@ class M2MRelationship extends SugarRelationship
             return false;
         }
 
+        if (empty($_SESSION['disable_workflow']) || $_SESSION['disable_workflow'] != "Yes")
+        {
+            if ($lhs->$lhsLinkName instanceof Link2)
+            {
+                $lhs->$lhsLinkName->load();
+                $this->callBeforeDelete($lhs, $rhs, $lhsLinkName);
+            }
+
+            if ($rhs->$rhsLinkName instanceof Link2)
+            {
+                $rhs->$rhsLinkName->load();
+                $this->callBeforeDelete($rhs, $lhs, $rhsLinkName);
+            }
+        }
+
         $dataToRemove = array(
             $this->def['join_key_lhs'] => $lhs->id,
             $this->def['join_key_rhs'] => $rhs->id
@@ -258,6 +281,8 @@ class M2MRelationship extends SugarRelationship
                 $this->callAfterDelete($rhs, $lhs, $rhsLinkName);
             }
         }
+
+        return true;
     }
 
     /**
@@ -310,6 +335,7 @@ class M2MRelationship extends SugarRelationship
             $knownKey = $this->def['join_key_lhs'];
             $targetKey = $this->def['join_key_rhs'];
             $relatedSeed = BeanFactory::getBean($this->getRHSModule());
+            $relatedSeedKey = $this->def['rhs_key'];
             if (!empty($params['where']))
                 $whereTable = (empty($params['right_join_table_alias']) ? $relatedSeed->table_name : $params['right_join_table_alias']);
         }
@@ -318,6 +344,7 @@ class M2MRelationship extends SugarRelationship
             $knownKey = $this->def['join_key_rhs'];
             $targetKey = $this->def['join_key_lhs'];
             $relatedSeed = BeanFactory::getBean($this->getLHSModule());
+            $relatedSeedKey = $this->def['lhs_key'];
             if (!empty($params['where']))
                 $whereTable = (empty($params['left_join_table_alias']) ? $relatedSeed->table_name : $params['left_join_table_alias']);
         }
@@ -333,9 +360,14 @@ class M2MRelationship extends SugarRelationship
         }
 
         $deleted = !empty($params['deleted']) ? 1 : 0;
-        $from = $rel_table;
-        if (!empty($params['where']))
+        $from = $rel_table . " ";
+        if (!empty($params['where'])) {
             $from .= ", $whereTable";
+            if (isset($relatedSeed->custom_fields)) {
+                $customJoin = $relatedSeed->custom_fields->getJOIN();
+                $from .= $customJoin ? $customJoin['join'] : '';
+            }
+        }
 
         if (empty($params['return_as_array'])) {
             $query = "SELECT $targetKey id FROM $from WHERE $where AND $rel_table.deleted=$deleted";

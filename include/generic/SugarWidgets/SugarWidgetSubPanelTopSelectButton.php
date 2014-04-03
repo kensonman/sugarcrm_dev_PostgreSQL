@@ -2,7 +2,7 @@
 if(!defined('sugarEntry') || !sugarEntry) die('Not A Valid Entry Point');
 /*********************************************************************************
  * SugarCRM Community Edition is a customer relationship management program developed by
- * SugarCRM, Inc. Copyright (C) 2004-2012 SugarCRM Inc.
+ * SugarCRM, Inc. Copyright (C) 2004-2013 SugarCRM Inc.
  * 
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Affero General Public License version 3 as published by the
@@ -63,9 +63,9 @@ class SugarWidgetSubPanelTopSelectButton extends SugarWidgetSubPanelTopButton
 		global $app_strings;
 		$initial_filter = '';
 
-		$this->title = $app_strings['LBL_SELECT_BUTTON_TITLE'];
-		$this->accesskey = $app_strings['LBL_SELECT_BUTTON_KEY'];
-		$this->value = $this->getDisplayName();
+	    $this->title     = $this->getTitle();
+        $this->accesskey = $this->getAccesskey();
+        $this->value     = $this->getDisplayName();
 
 		if (is_array($this->button_properties)) {
 			if( isset($this->button_properties['title'])) {
@@ -148,19 +148,21 @@ class SugarWidgetSubPanelTopSelectButton extends SugarWidgetSubPanelTopButton
 			),
 		);
 
-		if (is_array($this->button_properties) && !empty($this->button_properties['add_to_passthru_data'])) {
-			$popup_request_data['passthru_data']= array_merge($popup_request_data['passthru_data'],$this->button_properties['add_to_passthru_data']);
-		}
+                // bugfix #57850 add marketing_id to the request data to allow filtering based on it
+                if (!empty($_REQUEST['mkt_id']))
+                {
+                    $popup_request_data['passthru_data']['marketing_id'] = $_REQUEST['mkt_id'];
+                }
+
+                if (is_array($this->button_properties) && !empty($this->button_properties['add_to_passthru_data'])) 
+                {
+                    $popup_request_data['passthru_data']= array_merge($popup_request_data['passthru_data'],$this->button_properties['add_to_passthru_data']);
+                }
 
 		if (is_array($this->button_properties) && !empty($this->button_properties['add_to_passthru_data']['return_type'])) {
 
 			if ($this->button_properties['add_to_passthru_data']['return_type']=='report') {
 				$initial_filter = "&module_name=". urlencode($widget_data['module']);
-			}
-			if ($this->button_properties['add_to_passthru_data']['return_type']=='addtoprospectlist') {
-				if (isset($widget_data['query'])) {
-					$popup_request_data['passthru_data']['query']=$widget_data['query'];
-				}
 			}
 		}
         //acl_roles_users_selectuser_button
@@ -171,5 +173,22 @@ class SugarWidgetSubPanelTopSelectButton extends SugarWidgetSubPanelTopButton
 			. ' value="' . $this->value . "\"\n"
 			. " onclick='open_popup(\"$this->module_name\",600,400,\"$initial_filter\",true,true,$json_encoded_php_array,\"$popup_mode\",$create);' />\n";
 	}
+
+    /**
+    * @return string
+    */
+    protected function getTitle()
+    {
+       return translate('LBL_SELECT_BUTTON_TITLE');
+    }
+
+    /**
+    * @return string
+    */
+    protected function getAccesskey()
+    {
+       return translate('LBL_SELECT_BUTTON_KEY');
+    }
+
 }
 ?>

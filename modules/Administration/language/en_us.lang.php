@@ -2,7 +2,7 @@
 if(!defined('sugarEntry') || !sugarEntry) die('Not A Valid Entry Point');
 /*********************************************************************************
  * SugarCRM Community Edition is a customer relationship management program developed by
- * SugarCRM, Inc. Copyright (C) 2004-2012 SugarCRM Inc.
+ * SugarCRM, Inc. Copyright (C) 2004-2013 SugarCRM Inc.
  * 
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Affero General Public License version 3 as published by the
@@ -361,6 +361,7 @@ $mod_strings = array (
     'LBL_LICENSE_VALIDATION_KEY'           => 'Validation Key',
     'LBL_LICENSE_VALIDATION'           => 'License Validation',
     'LBL_LICENSE'               => 'License',
+    'LBL_LICENSE_UNAUTHORIZED_ACCESS'               => 'Unauthorized access to license settings.',
     'LBL_LIST_FIRST_CONNECT_DATE' => 'First Connect Date',
     'LBL_LIST_LAST_CONNECT_DATE' => 'Last Connect Date',
     'LBL_LIST_NUM_SYNCS' => 'Num. of Syncs',
@@ -390,6 +391,8 @@ $mod_strings = array (
 	'LBL_LDAP_GROUP_USER_ATTR_DESC'=>'The unique identifier of the person that will be used to check if they are a member of the group Example: <em>uid</em>',
 	'LBL_LDAP_GROUP_ATTR_DESC'=>'The attribute of the Group that will be used to filter against the User Attribute Example: <em>memberUid</em>',
 	'LBL_LDAP_GROUP_ATTR'=>'Group Attribute:',
+    'LBL_LDAP_GROUP_ATTR_REQ_DN' => 'With User DN:',
+    'LBL_LDAP_GROUP_ATTR_REQ_DN_DESC' => 'Include the User DN with the User Attribute when checking group membership',
 	'LBL_LDAP_USER_FILTER_DESC'=>'Any additional filter params to apply when authenticating users e.g.\nis_sugar_user=1 or (is_sugar_user=1)(is_sales=1)',
     'LBL_LDAP_LOGIN_ATTRIBUTE'=>'Login Attribute:',
     'LBL_LDAP_BIND_ATTRIBUTE'=>'Bind Attribute:',
@@ -819,6 +822,8 @@ $mod_strings = array (
     'LBL_USER_NAME' => 'User Name:',
     'LBL_USERNAME'             => 'User Name',
     'LBL_USERS_TITLE' => 'Users',
+    'LBL_HISTORY_CONTACTS_EMAILS' => 'History Subpanel',
+    'LBL_HISTORY_CONTACTS_EMAILS_DESC' => 'Enable/Disable contacts\' emails in history',
 
     'LBL_USERS_DESC' => 'Create, edit, activate and deactivate users in Sugar.',
 
@@ -923,7 +928,7 @@ $mod_strings = array (
  	'WARN_LICENSE_EXPIRED'=> "Notice: Your license expires in ",
     'WARN_LICENSE_EXPIRED2' =>" day(s). Please go to the <a href='index.php?action=LicenseSettings&module=Administration'>'\"License Management\"</a>  in the Admin screen.",
     'WARN_LICENSE_SEATS'=>  "Warning: User licenses exceeded by ",
-    'WARN_LICENSE_SEATS2' => ".  Please contact your sales representative or email <a href='mailto:cagroup@sugarcrm.com'>cagroup@sugarcrm.com</a>.",
+    'WARN_LICENSE_SEATS2' => ".  Please contact your sales representative or email <a href='mailto:sales@sugarcrm.com'>sales@sugarcrm.com</a>.",
     'WARN_LICENSE_SEATS_MAXED'=>  "Warning: The number of active users is already the maximum number of licenses allowed: ",
     'WARN_LICENSE_SEATS_EDIT_USER'=>  "Warning: The number of active users is already the maximum number of licenses allowed",
     'WARN_LICENSE_SEATS_USER_CREATE'=>"Warning: The number of active users allowed by your license matches the number of active users in the system. You will not be able to create additional active users.",
@@ -1013,9 +1018,11 @@ $mod_strings = array (
 'ML_INVALID_ACTION_IN_MANIFEST'=>'Invalid action in your manifest:',
 'ML_NO_MANIFEST'=>'This package does not contain a manifest',
 'ML_INVALID_FUNCTION'=>'Invalid usage of a function ',
+'ML_INVALID_METHOD'=>'Invalid usage of a reserved method name ',
 'ML_INVALID_EXT'=>'Invalid file extension ',
 'ML_ISSUES'=>'Issues',
 'ML_MANIFEST_ISSUE'=>'Issue with the manifest',
+'ML_CONFIG_OVERRIDE'=>'Config modification is not allowed',
 
 	'LBL_ACTIVE_MODULES' => 'Enabled Modules',
 	'LBL_DISABLED_MODULES' => 'Disabled Modules',
@@ -1157,7 +1164,17 @@ $mod_strings = array (
     'LBL_FTS_CONN_SUCCESS' => 'The connection was successfully made. You will need to perform a system index for full-text searching to work for the enabled modules and module fields.',
 	'LBL_FTS_CONN_SUCCESS_SHORT' => 'A system index operation has been scheduled to run within the next several minutes.',
     'LBL_FTS_CONN_FAILURE_SHORT' => 'Unable to schedule an index operation.',
-    'LBL_FTS_PAGE_DESC' => 'To enable full text searching, select the search engine that will be used and enter the host and port of the search engine. To complete the setup, connect to the engine and perform a full system index.',
-    'LBL_FTS_CONNECTION_INVALID' => 'The Full Text Search Settings you have entered are invalid and may slow down system performance.  Please change or clear your settings.'
+    'LBL_FTS_PAGE_DESC' => 'To enable full text searching:<br>
+1) Select the search engine that will be used<br>
+2) Enter the host and port of the search engine<br>
+3) Click Test to make sure Sugar can connect to the search engine<br>
+4) Click Schedule System Index. Make sure that crontab is set up to run cron.php. This will handle indexing as well as the fallback mechanism when the connection to the search engine is interrupted.',
+    'LBL_FTS_DISABLED' => 'Full Text Search has been disabled because the system is not able to connect to the search engine.',
+    'LBL_FTS_CONNECTION_INVALID' => 'The Full Text Search Settings you have entered are invalid and may slow down system performance.  Please change or clear your settings.',
+    'MSG_RECONNECT_LOTUSLIVE' => 'You are currently not connected to IBM SmartCloud. Connect to IBM SmartCloud within your Profile to be able to access IBM SmartCloud meetings and files.',
+    'LBL_REPAIR_UPLOAD_FOLDER' => 'Remove missed files from upload directory',
+    'LBL_REPAIR_UPLOAD_FOLDER_DESC' => 'Please note that removal can take a lot of time',
+    'LBL_TOTAL_FILES' => 'Total files',
+    'LBL_REMOVED_FILES' => 'Removed files',
 );
 

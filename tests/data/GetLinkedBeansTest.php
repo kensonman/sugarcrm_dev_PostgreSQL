@@ -1,7 +1,7 @@
 <?php
 /*********************************************************************************
  * SugarCRM Community Edition is a customer relationship management program developed by
- * SugarCRM, Inc. Copyright (C) 2004-2012 SugarCRM Inc.
+ * SugarCRM, Inc. Copyright (C) 2004-2013 SugarCRM Inc.
  * 
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Affero General Public License version 3 as published by the
@@ -47,6 +47,12 @@ class GetLinkedBeansTest extends Sugar_PHPUnit_Framework_TestCase
         $GLOBALS['current_user']->setPreference('timezone', "America/Los_Angeles");
 	    $GLOBALS['current_user']->setPreference('datef', "m/d/Y");
 		$GLOBALS['current_user']->setPreference('timef', "h.iA");
+
+        $beanList = array();
+        $beanFiles = array();
+        require('include/modules.php');
+        $GLOBALS['beanList'] = $beanList;
+        $GLOBALS['beanFiles'] = $beanFiles;
 	}
 
 	public function tearDown()
@@ -61,6 +67,8 @@ class GetLinkedBeansTest extends Sugar_PHPUnit_Framework_TestCase
             if (is_file($file))
                 unlink($file);
         }
+
+        unset($GLOBALS['beanFiles'], $GLOBALS['beanList']);
 	}
 
     public function testGetLinkedBeans()

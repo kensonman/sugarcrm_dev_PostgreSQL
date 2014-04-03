@@ -1,6 +1,6 @@
 /*********************************************************************************
  * SugarCRM Community Edition is a customer relationship management program developed by
- * SugarCRM, Inc. Copyright (C) 2004-2012 SugarCRM Inc.
+ * SugarCRM, Inc. Copyright (C) 2004-2013 SugarCRM Inc.
  * 
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Affero General Public License version 3 as published by the
@@ -263,22 +263,34 @@ function toggleMore(spanId, img_id, module, action, params){
 					
 					$(".ui-dialog").find(".open").dialog("close");
 
+					var el = '#'+spanId+ ' img';
+					if (action == 'DisplayInlineTeams')
+					{
+					    el = '#'+spanId;
+					}
 					var $dialog = $('<div class="open"></div>')
 					.html(body)
 					.dialog({
 						autoOpen: false,
 						title: caption,
 						width: 300,
-						position: { 
+						position: {
 						    my: 'right top',
 						    at: 'left top',
-						    of: $('#'+spanId+ ' img')
+						    of: $(el)
 					  }
 					});
-					
-					
+
+					var width = $dialog.dialog( "option", "width" );
+					var pos = $(el).offset();
+					var ofWidth = $(el).width();
+
+					if((pos.left + ofWidth) - 40 < width) {
+					    $dialog.dialog("option","position",{my: 'left top',at: 'right top',of: $(el)})	;
+					}
+
 					$dialog.dialog('open');
-				
+
 				}
 				
 		success = function(data) {

@@ -1,7 +1,7 @@
 <!--
 /*********************************************************************************
  * SugarCRM Community Edition is a customer relationship management program developed by
- * SugarCRM, Inc. Copyright (C) 2004-2012 SugarCRM Inc.
+ * SugarCRM, Inc. Copyright (C) 2004-2013 SugarCRM Inc.
  * 
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Affero General Public License version 3 as published by the
@@ -140,7 +140,7 @@
 		</tr>
 		<tr>
 			<td scope="col" NOWRAP valign="top"><slot>{$MOD.LBL_MESSAGE_FOR} <span class="required">{$APP.LBL_REQUIRED_SYMBOL}</span></slot></td>
-			<td class="datafield"><slot><input type="checkbox"  tabindex='1' onclick="toggle_message_for(this);" id="all_prospect_lists" {$ALL_PROSPECT_LISTS_CHECKED} name='all_prospect_lists' title="{$MOD.LBL_MESSAGE_FOR}'>{$MOD.LBL_ALL_PROSPECT_LISTS}</slot></td>
+			<td class="datafield"><slot><input type="checkbox"  tabindex='1' onclick="toggle_message_for(this);" id="all_prospect_lists" {$ALL_PROSPECT_LISTS_CHECKED} name='all_prospect_lists' title="{$MOD.LBL_MESSAGE_FOR}">{$MOD.LBL_ALL_PROSPECT_LISTS}</slot></td>
 			<td scope="col" NOWRAP valign="top"><slot>{$MOD.LBL_TEMPLATE} <span class="required">{$APP.LBL_REQUIRED_SYMBOL}</span></slot></td>
 			<td class="datafield" nowrap>
 					<select  id="template_id" name='template_id' tabindex='2' onchange="show_edit_template_link(this);" title='{$MOD.LBL_TEMPLATE}'>{$EMAIL_TEMPLATE_OPTIONS}</select>

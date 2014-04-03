@@ -1,7 +1,7 @@
 <?php
 /*********************************************************************************
  * SugarCRM Community Edition is a customer relationship management program developed by
- * SugarCRM, Inc. Copyright (C) 2004-2012 SugarCRM Inc.
+ * SugarCRM, Inc. Copyright (C) 2004-2013 SugarCRM Inc.
  * 
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Affero General Public License version 3 as published by the
@@ -56,10 +56,10 @@
                 'include/javascript/quickCompose.js'    => 'include/javascript/sugar_grp1.js',
                 'include/javascript/yui/build/yuiloader/yuiloader-min.js' => 'include/javascript/sugar_grp1.js',
                 //HTML decode
-                'include/javascript/phpjs/license.js' => 'include/javascript/sugar_grp1.js',
                 'include/javascript/phpjs/get_html_translation_table.js' => 'include/javascript/sugar_grp1.js',
                 'include/javascript/phpjs/html_entity_decode.js' => 'include/javascript/sugar_grp1.js',
                 'include/javascript/phpjs/htmlentities.js' => 'include/javascript/sugar_grp1.js',
+               'include/EditView/Panels.js'   => 'include/javascript/sugar_grp1.js',
             ),
 			//jquery libraries
 			$sugar_grp_jquery = array(
@@ -191,6 +191,6 @@
     /**
      * Check for custom additions to this code
      */
-    if(file_exists("custom/jssource/JSGroupings.php")) {
-        require("custom/jssource/JSGroupings.php");
+    if(file_exists("custom/application/Ext/JSGroupings/jsgroups.ext.php")) {
+        require("custom/application/Ext/JSGroupings/jsgroups.ext.php");
     }

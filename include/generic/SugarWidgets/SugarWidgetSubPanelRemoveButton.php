@@ -2,7 +2,7 @@
 if(!defined('sugarEntry') || !sugarEntry) die('Not A Valid Entry Point');
 /*********************************************************************************
  * SugarCRM Community Edition is a customer relationship management program developed by
- * SugarCRM, Inc. Copyright (C) 2004-2012 SugarCRM Inc.
+ * SugarCRM, Inc. Copyright (C) 2004-2013 SugarCRM Inc.
  * 
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Affero General Public License version 3 as published by the
@@ -103,9 +103,7 @@ class SugarWidgetSubPanelRemoveButton extends SugarWidgetField
 
 		$icon_remove_text = strtolower($app_strings['LBL_ID_FF_REMOVE']);
 		
-		if($linked_field == 'get_products_query')
-			$linked_field = 'products';
-        else if($linked_field == 'get_emails_by_assign_or_link')
+         if($linked_field == 'get_emails_by_assign_or_link')
             $linked_field = 'emails';
 		//based on listview since that lets you select records
 		if($layout_def['ListView'] && !$hideremove) {
@@ -122,4 +120,3 @@ class SugarWidgetSubPanelRemoveButton extends SugarWidgetField
 		}
 	}
 }
-?>

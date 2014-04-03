@@ -2,7 +2,7 @@
 if(!defined('sugarEntry') || !sugarEntry) die('Not A Valid Entry Point');
 /*********************************************************************************
  * SugarCRM Community Edition is a customer relationship management program developed by
- * SugarCRM, Inc. Copyright (C) 2004-2012 SugarCRM Inc.
+ * SugarCRM, Inc. Copyright (C) 2004-2013 SugarCRM Inc.
  * 
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Affero General Public License version 3 as published by the
@@ -77,58 +77,6 @@ class AdministrationController extends SugarController
         // TODO: find way to enforce order
         $cfg->handleOverride();
         header("Location: index.php?module=Administration&action=Languages");
-    }
-
-    public function action_updatewirelessenabledmodules()
-    {
-        require_once('modules/Administration/Forms.php');
-
-        global $app_strings, $current_user, $moduleList;
-
-        if (!is_admin($current_user)) sugar_die($app_strings['ERR_NOT_ADMIN']);
-
-        require_once('modules/Configurator/Configurator.php');
-        $configurator = new Configurator();
-        $configurator->saveConfig();
-
-        if ( isset( $_REQUEST['enabled_modules'] ) && ! empty ($_REQUEST['enabled_modules'] ))
-        {
-            $updated_enabled_modules = array () ;
-            foreach ( explode (',', $_REQUEST['enabled_modules'] ) as $e )
-            {
-                $updated_enabled_modules [ $e ] = array () ;
-            }
-
-            // transfer across any pre-existing definitions for the enabled modules from the current module registry
-            if (file_exists('include/MVC/Controller/wireless_module_registry.php'))
-            {
-                require('include/MVC/Controller/wireless_module_registry.php');
-                if ( ! empty ( $wireless_module_registry ) )
-                {
-                    foreach ( $updated_enabled_modules as $e => $def )
-                    {
-                        if ( isset ( $wireless_module_registry [ $e ] ) )
-                        {
-                            $updated_enabled_modules [ $e ] = $wireless_module_registry [ $e ] ;
-                        }
-
-                    }
-                }
-            }
-
-            $filename = 'custom/include/MVC/Controller/wireless_module_registry.php' ;
-
-            mkdir_recursive ( dirname ( $filename ) ) ;
-            write_array_to_file ( 'wireless_module_registry', $updated_enabled_modules, $filename );
-            foreach($moduleList as $mod){
-                sugar_cache_clear("CONTROLLER_wireless_module_registry_$mod");
-            }
-            //Users doesn't appear in the normal module list, but its value is cached on login.
-            sugar_cache_clear("CONTROLLER_wireless_module_registry_Users");
-            sugar_cache_reset();
-        }
-
-        echo "true";
     }
 
 

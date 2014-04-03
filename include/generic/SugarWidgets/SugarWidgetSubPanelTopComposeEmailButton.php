@@ -2,7 +2,7 @@
 if(!defined('sugarEntry') || !sugarEntry) die('Not A Valid Entry Point');
 /*********************************************************************************
  * SugarCRM Community Edition is a customer relationship management program developed by
- * SugarCRM, Inc. Copyright (C) 2004-2012 SugarCRM Inc.
+ * SugarCRM, Inc. Copyright (C) 2004-2013 SugarCRM Inc.
  * 
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Affero General Public License version 3 as published by the
@@ -53,6 +53,12 @@ class SugarWidgetSubPanelTopComposeEmailButton extends SugarWidgetSubPanelTopBut
 
 	function display($defines)
 	{
+		if((ACLController::moduleSupportsACL($defines['module'])  && !ACLController::checkAccess($defines['module'], 'edit', true) ||
+			$defines['module'] == "Activities" & !ACLController::checkAccess("Emails", 'edit', true))){
+			$temp = '';
+			return $temp;
+		}
+		
 		global $app_strings,$current_user,$sugar_config,$beanList,$beanFiles;
 		$title = $app_strings['LBL_COMPOSE_EMAIL_BUTTON_TITLE'];
 		//$accesskey = $app_strings['LBL_COMPOSE_EMAIL_BUTTON_KEY'];

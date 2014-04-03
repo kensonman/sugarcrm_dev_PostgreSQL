@@ -1,7 +1,7 @@
 <?php
 /*********************************************************************************
  * SugarCRM Community Edition is a customer relationship management program developed by
- * SugarCRM, Inc. Copyright (C) 2004-2012 SugarCRM Inc.
+ * SugarCRM, Inc. Copyright (C) 2004-2013 SugarCRM Inc.
  * 
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Affero General Public License version 3 as published by the
@@ -143,6 +143,22 @@ class ViewModulefields extends SugarView
             }elseif(file_exists($this->mbModule->path. '/language/en_us.lang.php')){
                 include($this->mbModule->path .'/language/en_us.lang.php');
                 $this->mbModule->setModStrings('en_us',$mod_strings);
+            }
+
+            foreach($this->mbModule->mbvardefs->vardefs['fields'] as $k=>$v)
+            {
+                if ($k != $this->mbModule->name)
+                {
+                    foreach($v as $field => $def)
+                    {
+                        if (in_array($field, array_keys($this->mbModule->mbvardefs->vardefs['fields'][$this->mbModule->name])))
+                        {
+                            $this->mbModule->mbvardefs->vardefs['fields'][$k][$field] = $this->mbModule->mbvardefs->vardefs['fields'][$this->mbModule->name][$field];
+
+                            unset($this->mbModule->mbvardefs->vardefs['fields'][$this->mbModule->name][$field]);
+                        }
+                    }
+                }
             }
 
             foreach($this->mbModule->mbvardefs->vardefs['fields'] as $k=>$v)

@@ -2,7 +2,7 @@
 
 /*********************************************************************************
  * SugarCRM Community Edition is a customer relationship management program developed by
- * SugarCRM, Inc. Copyright (C) 2004-2012 SugarCRM Inc.
+ * SugarCRM, Inc. Copyright (C) 2004-2013 SugarCRM Inc.
  * 
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Affero General Public License version 3 as published by the
@@ -146,7 +146,7 @@
     </tr>
     <tr>
         <td  scope="row" width='12%' nowrap>
-            {$MOD.NEW_LOGO}&nbsp;{sugar_help text=$MOD.NEW_LOGO_HELP}
+            {$MOD.NEW_LOGO}&nbsp;{sugar_help text=$MOD.NEW_LOGO_HELP_NO_SPACE}
         </td>
         <td  width='35%'>
             <div id="container_upload"></div>
@@ -169,6 +169,20 @@
         <td>
             <input type='hidden' name='disable_convert_lead' value='false'>
             <input name='disable_convert_lead'  type="checkbox" value="true" {$disable_convert_lead}>
+        </td>
+        <td colspan="2">&nbsp;</td>
+    </tr>
+
+    <tr>
+        <td  scope="row" nowrap>{$MOD.LBL_ENABLE_ACTION_MENU}: &nbsp;{sugar_help text=$MOD.LBL_ENABLE_ACTION_MENU_DESC}</td>
+    {if isset($config.enable_action_menu) && $config.enable_action_menu != "true" }
+        {assign var='enable_action_menu' value=''}
+        {else}
+        {assign var='enable_action_menu' value='CHECKED'}
+    {/if}
+        <td>
+            <input type='hidden' name='enable_action_menu' value='false'>
+            <input name='enable_action_menu'  type="checkbox" value="true" {$enable_action_menu}>
         </td>
         <td colspan="2">&nbsp;</td>
     </tr>
@@ -321,8 +335,8 @@
 
 </table>
 
-
 <table  width="100%" border="0" cellspacing="1" cellpadding="0" class="edit view">
+{if $logger_visible}
 <tr>
 <th align="left" scope="row" colspan="6"><h4>{$MOD.LBL_LOGGER}</h4></th>
 </tr>
@@ -346,11 +360,11 @@
 		<td scope="row">{$MOD.LBL_LOGGER_MAX_LOGS} </td>
 		<td > <input name="logger_file_maxLogs" value="{$config.logger.file.maxLogs}"></td>
 	</tr>
+{/if}
 	<tr>
 	    <td><a href="index.php?module=Configurator&action=LogView" target="_blank">{$MOD.LBL_LOGVIEW}</a></td>
 	</tr>
 </table>
-
 
 
 <div style="padding-top: 2px;">
@@ -360,12 +374,6 @@
 </div>
 {$JAVASCRIPT}
 
-
-<script>
-addToValidate('ConfigureSettings', 'system_name', 'varchar', true,'System Name' );
-addToValidateMoreThan('ConfigureSettings', 'list_max_entries_per_page', 'int', true, '', 1);
-addToValidateMoreThan('ConfigureSettings', 'list_max_entries_per_subpanel', 'int', true, '', 1);
-</script>
 </form>
 <div id='upload_panel' style="display:none">
     <form id="upload_form" name="upload_form" method="POST" action='index.php' enctype="multipart/form-data">
@@ -373,6 +381,11 @@ addToValidateMoreThan('ConfigureSettings', 'list_max_entries_per_subpanel', 'int
         {sugar_getimage name="sqsWait" ext=".gif" alt=$mod_strings.LBL_LOADING other_attributes='id="loading_img_company" style="display:none" '}
     </form>
 </div>
+{if $error.company_logo}
+<script type='text/javascript'>
+{literal}$(function(){alert('{/literal}{$error.company_logo}{literal}');});{/literal}
+</script>
+{/if}
 {literal}
 <script type='text/javascript'>
 function init_logo(){

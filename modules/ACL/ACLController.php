@@ -2,7 +2,7 @@
 if(!defined('sugarEntry') || !sugarEntry) die('Not A Valid Entry Point');
 /*********************************************************************************
  * SugarCRM Community Edition is a customer relationship management program developed by
- * SugarCRM, Inc. Copyright (C) 2004-2012 SugarCRM Inc.
+ * SugarCRM, Inc. Copyright (C) 2004-2013 SugarCRM Inc.
  * 
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Affero General Public License version 3 as published by the
@@ -98,8 +98,7 @@ class ACLController {
 			}else{
 				unset($moduleList['Calendar']);
 			}
-			if(isset($compList['Activities']) &&
-				!( ACLController::checkModuleAllowed('Notes', $actions) || ACLController::checkModuleAllowed('Notes', $actions))){
+			if(isset($compList['Activities']) && !ACLController::checkModuleAllowed('Notes', $actions)){
 				if($by_value){
 					unset($moduleList[$compList['Activities']]);
 				}else{
@@ -127,7 +126,7 @@ class ACLController {
 		return false;
 	}
 
-	function disabledModuleList($moduleList, $by_value=true,$view='list'){
+	static function disabledModuleList($moduleList, $by_value=true,$view='list'){
 		global $aclModuleList, $current_user;
 		if(is_admin($GLOBALS['current_user'])) return array();
 		$actions = ACLAction::getUserActions($current_user->id, false);

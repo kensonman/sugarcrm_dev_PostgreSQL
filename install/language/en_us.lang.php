@@ -2,7 +2,7 @@
 if(!defined('sugarEntry') || !sugarEntry) die('Not A Valid Entry Point');
 /*********************************************************************************
  * SugarCRM Community Edition is a customer relationship management program developed by
- * SugarCRM, Inc. Copyright (C) 2004-2012 SugarCRM Inc.
+ * SugarCRM, Inc. Copyright (C) 2004-2013 SugarCRM Inc.
  * 
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Affero General Public License version 3 as published by the
@@ -92,11 +92,13 @@ $mod_strings = array(
     'ERR_CHECKSYS_CONFIG_NOT_WRITABLE'  => 'The config file exists but is not writeable.  Please take the necessary steps to make the file writeable.  Depending on your Operating system, this might require you to change the permissions by running chmod 766, or to right click on the filename to access the properties and uncheck the read only option.',
     'ERR_CHECKSYS_CONFIG_OVERRIDE_NOT_WRITABLE'  => 'The config override file exists but is not writeable.  Please take the necessary steps to make the file writeable.  Depending on your Operating system, this might require you to change the permissions by running chmod 766, or to right click on the filename to access the properties and uncheck the read only option.',
     'ERR_CHECKSYS_CUSTOM_NOT_WRITABLE'  => 'The Custom Directory exists but is not writeable.  You may have to change permissions on it (chmod 766) or right click on it and uncheck the read only option, depending on your Operating System.  Please take the needed steps to make the file writeable.',
-    'ERR_CHECKSYS_FILES_NOT_WRITABLE'   => "The files or directories listed below are not writeable or are missing and cannot be created.  Depending on your Operating System, correcting this may require you to change permissions on the files or parent directory (chmod 766), or to right click on the parent directory and uncheck the 'read only' option and apply it to all subfolders.",
+    'ERR_CHECKSYS_FILES_NOT_WRITABLE'   => "The files or directories listed below are not writeable or are missing and cannot be created.  Depending on your Operating System, correcting this may require you to change permissions on the files or parent directory (chmod 755), or to right click on the parent directory and uncheck the 'read only' option and apply it to all subfolders.",
 	//'ERR_CHECKSYS_SAFE_MODE'			=> 'Safe Mode is On (please disable in php.ini)',
 	'ERR_CHECKSYS_SAFE_MODE'			=> 'Safe Mode is On (you may wish to disable in php.ini)',
     'ERR_CHECKSYS_ZLIB'					=> 'ZLib support not found: SugarCRM reaps enormous performance benefits with zlib compression.',
     'ERR_CHECKSYS_ZIP'					=> 'ZIP support not found: SugarCRM needs ZIP support in order to process compressed files.',
+    'ERR_CHECKSYS_PCRE'					=> 'PCRE library not found: SugarCRM needs PCRE library in order to process Perl style of regular expression pattern matching.',
+    'ERR_CHECKSYS_PCRE_VER'				=> 'PCRE library version: SugarCRM needs PCRE library 7.0 or above to process Perl style of regular expression pattern matching.',
 	'ERR_DB_ADMIN'						=> 'The provided database administrator username and/or password is invalid, and a connection to the database could not be established.  Please enter a valid user name and password.  (Error: ',
     'ERR_DB_ADMIN_MSSQL'                => 'The provided database administrator username and/or password is invalid, and a connection to the database could not be established.  Please enter a valid user name and password.',
 	'ERR_DB_EXISTS_NOT'					=> 'The specified database does not exist.',
@@ -204,6 +206,7 @@ $mod_strings = array(
 	'LBL_CHECKSYS_XML'					=> 'XML Parsing',
 	'LBL_CHECKSYS_ZLIB'					=> 'ZLIB Compression Module',
 	'LBL_CHECKSYS_ZIP'					=> 'ZIP Handling Module',
+	'LBL_CHECKSYS_PCRE'					=> 'PCRE Library',
 	'LBL_CHECKSYS_FIX_FILES'            => 'Please fix the following files or directories before proceeding:',
     'LBL_CHECKSYS_FIX_MODULE_FILES'     => 'Please fix the following module directories and the files under them before proceeding:',
     'LBL_CHECKSYS_UPLOAD'               => 'Writable Upload Directory',
@@ -530,6 +533,8 @@ $mod_strings = array(
     'LBL_OOTB_TRACKER'		=> 'Prune tracker tables',
     'LBL_OOTB_SEND_EMAIL_REMINDERS'	=> 'Run Email Reminder Notifications',
     'LBL_UPDATE_TRACKER_SESSIONS' => 'Update tracker_sessions table',
+    'LBL_OOTB_CLEANUP_QUEUE' => 'Clean Jobs Queue',
+    'LBL_OOTB_REMOVE_DOCUMENTS_FROM_FS' => 'Removal of documents from filesystem',
 
 
     'LBL_PATCHES_TITLE'     => 'Install Latest Patches',

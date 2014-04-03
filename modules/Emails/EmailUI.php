@@ -2,7 +2,7 @@
 if(!defined('sugarEntry') || !sugarEntry) die('Not A Valid Entry Point');
 /*********************************************************************************
  * SugarCRM Community Edition is a customer relationship management program developed by
- * SugarCRM, Inc. Copyright (C) 2004-2012 SugarCRM Inc.
+ * SugarCRM, Inc. Copyright (C) 2004-2013 SugarCRM Inc.
  * 
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Affero General Public License version 3 as published by the
@@ -1235,9 +1235,15 @@ eoq;
 
 			$from = (isset($email->from_name) && !empty($email->from_name)) ? $email->from_name : $email->from_addr;
 
-			if(isset($_REQUEST['sugarEmail']) && !empty($_REQUEST['sugarEmail']))
-               	$from = (isset($email->to_addrs_names) && !empty($email->to_addrs_names)) ? $email->to_addrs_names : $email->to_addrs;
-
+            if(isset($_REQUEST['sugarEmail']) && !empty($_REQUEST['sugarEmail']))
+            {
+                if($email->status == "sent")
+                {
+                    $from = (isset($email->to_addrs_names) && !empty($email->to_addrs_names)) ? $email->to_addrs_names : $email->to_addrs;
+                }else{
+                    $from = (isset($email->from_name) && !empty($email->from_name)) ? $email->from_name : $email->from_addr_name;
+                }
+            }
 
 			$name = explode(" ", trim($from));
 
@@ -1532,6 +1538,14 @@ eoq;
 				$email = new Email();
 				$email->retrieve($id);
 
+                // BUG FIX BEGIN
+                // Bug 50973 - marking unread in group inbox removes message
+                if (empty($email->assigned_user_id))
+                {
+                    $email->setFieldNullable('assigned_user_id');
+                }
+                // BUG FIX END
+
 				switch($type) {
 					case "unread":
 						$email->status = 'unread';
@@ -1558,6 +1572,14 @@ eoq;
 					break;
 
 				}
+
+                // BUG FIX BEGIN
+                // Bug 50973 - reset assigned_user_id field defs
+                if (empty($email->assigned_user_id))
+                {
+                    $email->revertFieldNullable('assigned_user_id');
+                }
+                // BUG FIX END
 			}
 		} else {
 			/* dealing with IMAP email, uids are IMAP uids */
@@ -1923,6 +1945,10 @@ eoq;
 		$ret['parent_type'] = $email->parent_type;
 		$ret['parent_id'] = $email->parent_id;
 
+       if ($email->type == 'draft') {
+            $ret['cc'] = from_html($ccAddresses);
+            $ret['bcc'] = $bccAddresses;
+        }
 		// reply all
 		if(isset($_REQUEST['composeType']) && $_REQUEST['composeType'] == 'replyAll') {
 		    $ret['cc'] = from_html($ccAddresses);
@@ -2320,7 +2346,7 @@ eoq;
 				$archived->dynamic_query = '';
 				$archived->save();
 
-				// set flag to show that this was run
+			// set flag to show that this was run
 			$user->setPreference("email2Preflight", true, 1, "Emails");
 		}
 	}
@@ -2743,7 +2769,10 @@ eoq;
 	function getCacheValue($ieId, $type, $file, $key) {
 		global $sugar_config;
 
-		$cacheFilePath = sugar_cached("modules/Emails/{$ieId}/{$type}/{$file}");
+		$cleanIeId = cleanDirName($ieId);
+		$cleanType = cleanDirName($type);
+		$cleanFile = cleanFileName($file);
+		$cacheFilePath = sugar_cached("modules/Emails/{$cleanIeId}/{$cleanType}/{$cleanFile}");
 		$cacheFile = array();
 
 		if(file_exists($cacheFilePath)) {
@@ -2822,7 +2851,10 @@ eoq;
 	function writeCacheFile($key, $var, $ieId, $type, $file) {
 		global $sugar_config;
 
-		$the_file = sugar_cached("/modules/Emails/{$ieId}/{$type}/{$file}");
+		$cleanIeId = cleanDirName($ieId);
+		$cleanType = cleanDirName($type);
+		$cleanFile = cleanFileName($file);
+		$the_file = sugar_cached("modules/Emails/{$cleanIeId}/{$cleanType}/{$cleanFile}");
 		$timestamp = strtotime('now');
 		$array = array();
 		$array['timestamp'] = $timestamp;

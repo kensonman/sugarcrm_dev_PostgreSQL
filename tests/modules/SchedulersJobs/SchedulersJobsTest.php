@@ -1,7 +1,7 @@
 <?php
 /*********************************************************************************
  * SugarCRM Community Edition is a customer relationship management program developed by
- * SugarCRM, Inc. Copyright (C) 2004-2012 SugarCRM Inc.
+ * SugarCRM, Inc. Copyright (C) 2004-2013 SugarCRM Inc.
  * 
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Affero General Public License version 3 as published by the
@@ -490,6 +490,46 @@ class SchedulersJobsTest extends Sugar_PHPUnit_Framework_TestCase
         $this->assertEquals(SchedulersJob::JOB_STATUS_DONE, $job->status, "Wrong status");
         $this->scheduler->retrieve($this->scheduler->id);
         $this->assertNotEmpty($this->scheduler->last_run, "Last run was not updated");
+    }
+
+    public function testCleanupJobs()
+    {
+        $GLOBALS['current_user'] = SugarTestUserUtilities::createAnonymousUser();
+        $this->scheduler = new Scheduler(false);
+        $this->scheduler->id = create_guid();
+        $newjob = $this->createJob(array("name" => "Test Func", "status" => SchedulersJob::JOB_STATUS_DONE,
+        		"target" => "function::testJobFunction1", "assigned_user_id" => $GLOBALS['current_user']->id,
+        		"scheduler_id" => $this->scheduler->id));
+        $oldjob = $this->createJob(array("name" => "Test Func", "status" => SchedulersJob::JOB_STATUS_DONE,
+        		"target" => "function::testJobFunction1", "assigned_user_id" => $GLOBALS['current_user']->id,
+        		"scheduler_id" => $this->scheduler->id, 'update_date_modified' => false,
+                'date_modified' => TimeDate::getInstance()->getNow()->modify("-10 days")->asDB()));
+        $oldestjob = $this->createJob(array("name" => "Test Func", "status" => SchedulersJob::JOB_STATUS_DONE,
+        		"target" => "function::testJobFunction1", "assigned_user_id" => $GLOBALS['current_user']->id,
+        		"scheduler_id" => $this->scheduler->id, 'update_date_modified' => false,
+                'date_modified' => TimeDate::getInstance()->getNow()->modify("-100 days")->asDb()));
+
+        $this->assertNotEmpty($newjob->id);
+        $this->assertNotEmpty($oldjob->id);
+        $this->assertNotEmpty($oldestjob->id);
+
+        $cleanjob = $this->createJob(array("name" => "Test Func", "status" => SchedulersJob::JOB_STATUS_RUNNING,
+        		"target" => "function::cleanJobQueue", "assigned_user_id" => $GLOBALS['current_user']->id,
+        		"scheduler_id" => $this->scheduler->id));
+        $cleanjob->runJob();
+        // new job should be still there
+        $job = new SchedulersJob();
+        $job->retrieve($newjob->id);
+        $this->assertEquals($newjob->id, $job->id);
+        // old job should be deleted
+        $job = new SchedulersJob();
+        $job->retrieve($oldjob->id);
+        $this->assertEmpty($job->id);
+        $job->retrieve($oldjob->id, true, false);
+        $this->assertEquals($oldjob->id, $job->id);
+        // oldest job should be purged
+        $count = $this->db->getOne("SELECT count(*) from {$job->table_name} WHERE id='{$oldestjob->id}'");
+        $this->assertEquals(0, $count);
     }
 }
 

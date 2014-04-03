@@ -2,7 +2,7 @@
 if(!defined('sugarEntry') || !sugarEntry) die('Not A Valid Entry Point');
 /*********************************************************************************
  * SugarCRM Community Edition is a customer relationship management program developed by
- * SugarCRM, Inc. Copyright (C) 2004-2012 SugarCRM Inc.
+ * SugarCRM, Inc. Copyright (C) 2004-2013 SugarCRM Inc.
  * 
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Affero General Public License version 3 as published by the
@@ -177,9 +177,15 @@ function sugar_file_put_contents_atomic($filename, $data, $mode='wb', $use_inclu
     fwrite($f, $data);
     fclose($f);
 
-    if (!@rename($temp, $filename)) {
+    if (!@rename($temp, $filename))
+    {
         @unlink($filename);
-        @rename($temp, $filename);
+        if (!@rename($temp, $filename))
+        {
+            // cleaning up temp file to avoid filling up temp dir
+            @unlink($temp);
+            trigger_error("sugar_file_put_contents_atomic() : fatal rename failure '$temp' -> '$filename'", E_USER_ERROR);
+        }
     }
 
     if(file_exists($filename))

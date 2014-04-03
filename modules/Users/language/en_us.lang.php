@@ -2,7 +2,7 @@
 if(!defined('sugarEntry') || !sugarEntry) die('Not A Valid Entry Point');
 /*********************************************************************************
  * SugarCRM Community Edition is a customer relationship management program developed by
- * SugarCRM, Inc. Copyright (C) 2004-2012 SugarCRM Inc.
+ * SugarCRM, Inc. Copyright (C) 2004-2013 SugarCRM Inc.
  * 
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Affero General Public License version 3 as published by the
@@ -117,6 +117,7 @@ $mod_strings = array (
 	'LBL_CHANGE_SYSTEM_PASSWORD'		=> 'Please provide a new password.',
 	'LBL_CHANGE_PASSWORD_TITLE'         => 'Password',
     'LBL_CHOOSE_A_KEY'					=> 'Choose a key to prevent unauthorized publishing of your calendar',
+    'LBL_NO_KEY'                        => 'Key is not set. Please set key to enable publishing.',
 	'LBL_CHOOSE_WHICH'					=> 'Select which modules are accessible within the top navigation bar. Designate the order in which you would like the modules to appear.',
 	'LBL_CITY'							=> 'City',
 
@@ -234,6 +235,9 @@ $mod_strings = array (
    	'LBL_LOGIN_LOGIN_TIME_SECONDS'      => 'sec.',
     'LBL_LOGIN_ADMIN_CALL'              => 'Please contact the system administrator.',
 	// END LOGIN PAGE STRINGS
+    'LBL_LOGGED_OUT_1' => 'You have been logged out. To login again please click ',
+    'LBL_LOGGED_OUT_2' => 'here',
+    'LBL_LOGGED_OUT_3' => '.',
 	'LBL_MAIL_FROMADDRESS'				=> 'Reply-to address',
 	'LBL_MAIL_FROMNAME'					=> 'Reply-to name',
 	'LBL_MAIL_OPTIONS_TITLE'			=> 'Email Settings',
@@ -313,6 +317,7 @@ $mod_strings = array (
 	'LBL_REMINDER'						=> 'Reminders',
 	'LBL_REMINDER_POPUP' => 'Popup',
 	'LBL_REMINDER_EMAIL' => 'Email',
+    'LBL_REMINDER_EMAIL_ALL_INVITEES'   => 'Email all invitees',
 	'LBL_REMOVED_TABS'					=> 'Admin Remove Tabs',
 	'LBL_REPORTS_TO_NAME'				=> 'Reports to',
 	'LBL_REPORTS_TO'					=> 'Reports to',

@@ -2,7 +2,7 @@
 if(!defined('sugarEntry') || !sugarEntry) die('Not A Valid Entry Point');
 /*********************************************************************************
  * SugarCRM Community Edition is a customer relationship management program developed by
- * SugarCRM, Inc. Copyright (C) 2004-2012 SugarCRM Inc.
+ * SugarCRM, Inc. Copyright (C) 2004-2013 SugarCRM Inc.
  * 
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Affero General Public License version 3 as published by the
@@ -64,6 +64,8 @@ $job_strings = array (
 	4 => 'trimTracker',
 	/*4 => 'securityAudit()',*/
     12 => 'sendEmailReminders',
+    14 => 'cleanJobQueue',
+    15 => 'removeDocumentsFromFS',
 
 );
 
@@ -283,8 +285,8 @@ function pruneDatabase() {
 
 	$db = DBManagerFactory::getInstance();
 	$tables = $db->getTablesArray();
+    $queryString = array();
 
-//_ppd($tables);
 	if(!empty($tables)) {
 		foreach($tables as $kTable => $table) {
 			// find tables with deleted=1
@@ -302,14 +304,14 @@ function pruneDatabase() {
 
 			$qDel = "SELECT * FROM $table WHERE deleted = 1";
 			$rDel = $db->query($qDel);
-			$queryString = array();
+
 			// make a backup INSERT query if we are deleting.
 			while($aDel = $db->fetchByAssoc($rDel, false)) {
 				// build column names
 
-				$queryString[] = $db->insertParams($table, $columns, $rDel, null, false);
+				$queryString[] = $db->insertParams($table, $columns, $aDel, null, false);
 
-				if(!empty($custom_columns) && !empty($rDel['id'])) {
+				if(!empty($custom_columns) && !empty($aDel['id'])) {
                     $qDelCstm = 'SELECT * FROM '.$table.'_cstm WHERE id_c = '.$db->quoted($aDel['id']);
                     $rDelCstm = $db->query($qDelCstm);
 
@@ -395,29 +397,7 @@ function pollMonitoredInboxesForBouncedCampaignEmails() {
 		$ieX = new InboundEmail();
 		$ieX->retrieve($a['id']);
 		$ieX->connectMailserver();
-        $GLOBALS['log']->info("Bounced campaign scheduler connected to mail server id: {$a['id']} ");
-		$newMsgs = array();
-		if ($ieX->isPop3Protocol()) {
-			$newMsgs = $ieX->getPop3NewMessagesToDownload();
-		} else {
-			$newMsgs = $ieX->getNewMessageIds();
-		}
-
-		//$newMsgs = $ieX->getNewMessageIds();
-		if(is_array($newMsgs)) {
-			foreach($newMsgs as $k => $msgNo) {
-				$uid = $msgNo;
-				if ($ieX->isPop3Protocol()) {
-					$uid = $ieX->getUIDLForMessage($msgNo);
-				} else {
-					$uid = imap_uid($ieX->conn, $msgNo);
-				} // else
-                 $GLOBALS['log']->info("Bounced campaign scheduler will import message no: $msgNo");
-				$ieX->importOneEmail($msgNo, $uid, false,false);
-			}
-		}
-		imap_expunge($ieX->conn);
-		imap_close($ieX->conn);
+        $ieX->importMessages();
 	}
 
 	return true;
@@ -436,7 +416,84 @@ function sendEmailReminders(){
 	return $reminder->process();
 }
 
+function removeDocumentsFromFS()
+{
+    $GLOBALS['log']->info('Starting removal of documents if they are not present in DB');
 
+    /**
+     * @var DBManager $db
+     * @var SugarBean $bean
+     */
+    global $db;
+
+    // temp table to store id of files without memory leak
+    $tableName = 'cron_remove_documents';
+
+    $resource = $db->limitQuery("SELECT * FROM cron_remove_documents WHERE 1=1 ORDER BY date_modified ASC", 0, 100);
+    $return = true;
+    while ($row = $db->fetchByAssoc($resource)) {
+        $bean = BeanFactory::getBean($row['module']);
+        $bean->retrieve($row['bean_id'], true, false);
+        if (empty($bean->id)) {
+            $isSuccess = true;
+            $bean->id = $row['bean_id'];
+            $directory = $bean->deleteFileDirectory();
+            if (!empty($directory) && is_dir('upload://deleted/' . $directory)) {
+                if ($isSuccess = rmdir_recursive('upload://deleted/' . $directory)) {
+                    $directory = explode('/', $directory);
+                    while (!empty($directory)) {
+                        $path = 'upload://deleted/' . implode('/', $directory);
+                        if (is_dir($path)) {
+                            $directoryIterator = new DirectoryIterator($path);
+                            $empty = true;
+                            foreach ($directoryIterator as $item) {
+                                if ($item->getFilename() == '.' || $item->getFilename() == '..') {
+                                    continue;
+                                }
+                                $empty = false;
+                                break;
+                            }
+                            if ($empty) {
+                                rmdir($path);
+                            }
+                        }
+                        array_pop($directory);
+                    }
+                }
+            }
+            if ($isSuccess) {
+                $db->query('DELETE FROM ' . $tableName . ' WHERE id=' . $db->quoted($row['id']));
+            } else {
+                $return = false;
+            }
+        } else {
+            $db->query('UPDATE ' . $tableName . ' SET date_modified=' . $db->convert($db->quoted(TimeDate::getInstance()->nowDb()), 'datetime') . ' WHERE id=' . $db->quoted($row['id']));
+        }
+    }
+
+    return $return;
+}
+
+
+function cleanJobQueue($job)
+{
+    $td = TimeDate::getInstance();
+    // soft delete all jobs that are older than cutoff
+    $soft_cutoff = 7;
+    if(isset($GLOBALS['sugar_config']['jobs']['soft_lifetime'])) {
+        $soft_cutoff = $GLOBALS['sugar_config']['jobs']['soft_lifetime'];
+    }
+    $soft_cutoff_date = $job->db->quoted($td->getNow()->modify("- $soft_cutoff days")->asDb());
+    $job->db->query("UPDATE {$job->table_name} SET deleted=1 WHERE status='done' AND date_modified < ".$job->db->convert($soft_cutoff_date, 'datetime'));
+    // hard delete all jobs that are older than hard cutoff
+    $hard_cutoff = 21;
+    if(isset($GLOBALS['sugar_config']['jobs']['hard_lifetime'])) {
+        $hard_cutoff = $GLOBALS['sugar_config']['jobs']['hard_lifetime'];
+    }
+    $hard_cutoff_date = $job->db->quoted($td->getNow()->modify("- $hard_cutoff days")->asDb());
+    $job->db->query("DELETE FROM {$job->table_name} WHERE status='done' AND date_modified < ".$job->db->convert($hard_cutoff_date, 'datetime'));
+    return true;
+}
 
 if (file_exists('custom/modules/Schedulers/_AddJobsHere.php')) {
 	require('custom/modules/Schedulers/_AddJobsHere.php');

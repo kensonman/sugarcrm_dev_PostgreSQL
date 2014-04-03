@@ -2,7 +2,7 @@
 if(!defined('sugarEntry') || !sugarEntry) die('Not A Valid Entry Point');
 /*********************************************************************************
  * SugarCRM Community Edition is a customer relationship management program developed by
- * SugarCRM, Inc. Copyright (C) 2004-2012 SugarCRM Inc.
+ * SugarCRM, Inc. Copyright (C) 2004-2013 SugarCRM Inc.
  * 
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Affero General Public License version 3 as published by the
@@ -148,7 +148,7 @@ class SugarWidgetSubPanelTopSelectContactsButton extends SugarWidgetSubPanelTopS
 				'return_url' => urlencode($return_url),
 				'link_field_name' => $link_field_name,
 				'module_name' => $this->module_name,
-				'refresh_page'=>true,
+				'refresh_page' => 1,
 			),
 		);
 
@@ -160,11 +160,6 @@ class SugarWidgetSubPanelTopSelectContactsButton extends SugarWidgetSubPanelTopS
 
 			if ($this->button_properties['add_to_passthru_data']['return_type']=='report') {
 				$initial_filter = "&module_name=". urlencode($widget_data['module']);
-			}
-			if ($this->button_properties['add_to_passthru_data']['return_type']=='addtoprospectlist') {
-				if (isset($widget_data['query'])) {
-					$popup_request_data['passthru_data']['query']=$widget_data['query'];
-				}
 			}
 		}
 		$json_encoded_php_array = $this->_create_json_encoded_popup_request($popup_request_data);

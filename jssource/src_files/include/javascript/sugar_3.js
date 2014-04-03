@@ -1,6 +1,6 @@
 /*********************************************************************************
  * SugarCRM Community Edition is a customer relationship management program developed by
- * SugarCRM, Inc. Copyright (C) 2004-2012 SugarCRM Inc.
+ * SugarCRM, Inc. Copyright (C) 2004-2013 SugarCRM Inc.
  * 
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Affero General Public License version 3 as published by the
@@ -72,6 +72,7 @@ if (typeof(SUGAR) == "undefined") {
 
 // Namespaces
 SUGAR.namespace("themes");
+SUGAR.namespace("tour");
 
 /**
  * Namespace for Homepage
@@ -129,6 +130,7 @@ var maxHours = 24;
 var requiredTxt = 'Missing Required Field:';
 var invalidTxt = 'Invalid Value:';
 var secondsSinceLoad = 0;
+var alertsTimeoutId;
 var inputsWithErrors = new Array();
 var tabsWithErrors = new Array();
 var lastSubmitTime = 0;
@@ -151,13 +153,78 @@ function isSupportedIE() {
 
 	// IE Check supports ActiveX controls
 	if (userAgent.indexOf("msie") != -1 && userAgent.indexOf("mac") == -1 && userAgent.indexOf("opera") == -1) {
-		var version = navigator.appVersion.match(/MSIE (.\..)/)[1] ;
+		var version = navigator.appVersion.match(/MSIE (\d+\.\d+)/)[1] ;
 		if(version >= 5.5 && version < 10) {
 			return true;
 		} else {
 			return false;
 		}
 	}
+}
+
+function checkMinSupported(c, s) {
+    var current = c.split(".");
+    var supported = s.split(".");
+    for (var i in supported) {
+        if (current[i] && parseInt(current[i]) > parseInt(supported[i])) return true;
+        else if (current[i] && parseInt(current[i]) < parseInt(supported[i])) return false;
+    }
+    return true;
+}
+
+function checkMaxSupported(c, s) {
+    var current = c.split(".");
+    var supported = s.split(".");
+    for (var i in supported) {
+        if (current[i] && parseInt(current[i]) > parseInt(supported[i])) return false;
+        else if (current[i] && parseInt(current[i]) < parseInt(supported[i])) return true;
+    }
+    return true;
+}
+
+SUGAR.isSupportedBrowser = function(){
+    var supportedBrowsers = {
+        msie : {min:8, max:10}, // IE 8, 9, 10
+        safari : {min:534}, // Safari 5.1
+        mozilla : {min:22.0}, // Firefox 23.0
+        chrome : {min:28} // Chrome 28
+    };
+    var current = String($.browser.version);
+    var supported;
+    if ($.browser.msie){ // Internet Explorer
+        supported = supportedBrowsers['msie'];
+    }
+    else if ($.browser.mozilla) { // Firefox
+        supported = supportedBrowsers['mozilla'];
+    }
+    else {
+        $.browser.chrome = /chrome/.test(navigator.userAgent.toLowerCase());
+        if($.browser.chrome){ // Chrome
+            current = navigator.userAgent.match(/Chrome\/(.*?) /)[1];
+            supported = supportedBrowsers['chrome'];
+        }
+        else if($.browser.safari){ // Safari
+            supported = supportedBrowsers['safari'];
+        }
+    }
+    if (current && supported)
+        return checkMinSupported(current, String(supported.min)) && (!supported.max || checkMaxSupported(current, String(supported.max)));
+    else
+        return false;
+}
+
+SUGAR.isIECompatibilityMode = function(){
+    var agentStr = navigator.userAgent;
+    var mode = false;
+    if (agentStr.indexOf("MSIE 7.0") > -1 &&
+        (agentStr.indexOf("Trident/5.0") > -1 || // IE9 Compatibility View
+         agentStr.indexOf("Trident/4.0") > -1    // IE8 Compatibility View
+        )
+    )
+    {
+        mode = true;
+    }
+    return mode;
 }
 
 SUGAR.isIE = isSupportedIE();
@@ -202,7 +269,7 @@ function checkAlerts() {
 		}
 	}
 
-	setTimeout("checkAlerts()", 1000);
+    alertsTimeoutId = setTimeout("checkAlerts()", 1000);
 }
 
 function toggleDisplay(id) {
@@ -612,16 +679,17 @@ function isDBName(str) {
 }
 var time_reg_format = "[0-9]{1,2}\:[0-9]{2}";
 function isTime(timeStr) {
-    var time_reg_format = "[0-9]{1,2}\:[0-9]{2}";
-	time_reg_format = time_reg_format.replace('([ap]m)', '');
-	time_reg_format = time_reg_format.replace('([AP]M)', '');
+    var timeRegex = time_reg_format;
+    // eliminate the am/pm from the external time_reg_format
+	timeRegex = timeRegex.replace(/[ ]*\([^)]*m\)/i, '');
 	if(timeStr.length== 0){
 		return true;
 	}
 	//we now support multiple time formats
-	myregexp = new RegExp(time_reg_format)
-	if(!myregexp.test(timeStr))
-		return false
+	myregexp = new RegExp(timeRegex);
+	if(!myregexp.test(timeStr)) {
+        return false;
+    }
 
 	return true;
 }
@@ -629,7 +697,16 @@ function isTime(timeStr) {
 function inRange(value, min, max) {
     if (typeof num_grp_sep != 'undefined' && typeof dec_sep != 'undefined')
        value = unformatNumberNoParse(value, num_grp_sep, dec_sep).toString();
-	return value >= min && value <= max;
+    var result = true;
+    if (typeof min == 'number' && value < min)
+    {
+        result = false;
+    }
+    if (typeof max == 'number' && value > max)
+    {
+        result = false;
+    }
+    return result;
 }
 
 function bothExist(item1, item2) {
@@ -844,6 +921,7 @@ function validate_form(formname, startsWith){
 				if(typeof form[validate[formname][i][nameIndex]]  != 'undefined' && typeof form[validate[formname][i][nameIndex]].value != 'undefined'){
 					var bail = false;
 
+
                     //If a field is not required and it is blank or is binarydependant, skip validation.
                     //Example of binary dependant fields would be the hour/min/meridian dropdowns in a date time combo widget, which require further processing than a blank check
                     if(!validate[formname][i][requiredIndex] && trim(form[validate[formname][i][nameIndex]].value) == '' && (typeof(validate[formname][i][jstypeIndex]) != 'undefined' && validate[formname][i][jstypeIndex]  != 'binarydep'))
@@ -1004,7 +1082,18 @@ function validate_form(formname, startsWith){
 								if(!inRange(trim(form[validate[formname][i][nameIndex]].value), validate[formname][i][minIndex], validate[formname][i][maxIndex])){
 									isError = true;
                                     var lbl_validate_range = SUGAR.language.get('app_strings', 'LBL_VALIDATE_RANGE');
-                                    add_error_style(formname, validate[formname][i][nameIndex], validate[formname][i][msgIndex] + " value " + form[validate[formname][i][nameIndex]].value + " " + lbl_validate_range + " (" +validate[formname][i][minIndex] + " - " + validate[formname][i][maxIndex] +  ") ");
+                                    if (typeof validate[formname][i][minIndex] == 'number' && typeof validate[formname][i][maxIndex] == 'number')
+                                    {
+                                        add_error_style(formname, validate[formname][i][nameIndex], validate[formname][i][msgIndex] + " value " + form[validate[formname][i][nameIndex]].value + " " + lbl_validate_range + " (" +validate[formname][i][minIndex] + " - " + validate[formname][i][maxIndex] +  ")");
+                                    }
+                                    else if (typeof validate[formname][i][minIndex] == 'number')
+                                    {
+                                        add_error_style(formname, validate[formname][i][nameIndex], validate[formname][i][msgIndex] + " " + SUGAR.language.get('app_strings', 'MSG_SHOULD_BE') + ' ' + validate[formname][i][minIndex] + ' ' + SUGAR.language.get('app_strings', 'MSG_OR_GREATER'));
+                                    }
+                                    else if (typeof validate[formname][i][maxIndex] == 'number')
+                                    {
+                                        add_error_style(formname, validate[formname][i][nameIndex], validate[formname][i][msgIndex] + " " + SUGAR.language.get('app_strings', 'MSG_IS_MORE_THAN') + ' ' + validate[formname][i][maxIndex]);
+                                    }
 								}
 							break;
 							case 'isbefore':
@@ -1197,7 +1286,7 @@ function validate_form(formname, startsWith){
 		for(var wp = 0; wp < inputsWithErrors.length; wp++) {
 			var elementCoor = findElementPos(inputsWithErrors[wp]);
 			if(!(elementCoor.x >= nwX && elementCoor.y >= nwY &&
-				elementCoor.x <= seX && elementCoor.y <= seY)) { // if input is not within viewport
+                elementCoor.x <= seX+nwX && elementCoor.y <= seY+nwY)) { // if input is not within viewport, modify for SI bug 52497
 					inView = false;
 					scrollToTop = elementCoor.y - 75;
 					scrollToLeft = elementCoor.x - 75;
@@ -1349,7 +1438,7 @@ function getXMLHTTPinstance() {
 
 	// IE Check supports ActiveX controls
 	if (userAgent.indexOf("msie") != -1 && userAgent.indexOf("mac") == -1 && userAgent.indexOf("opera") == -1) {
-		var version = navigator.appVersion.match(/MSIE (.\..)/)[1] ;
+		var version = navigator.appVersion.match(/MSIE (\d+\.\d+)/)[1] ;
 		if(version >= 5.5 ) {
 			try {
 				xmlhttp = new ActiveXObject("Msxml2.XMLHTTP");
@@ -2789,13 +2878,31 @@ SUGAR.util = function () {
 
 			return el;
 		},
-		paramsToUrl : function (params) {
-			url = "";
-			for (i in params) {
-				url += i + "=" + params[i] + "&";
-			}
-			return url;
-		},
+        paramsToUrl : function (params) {
+            var parts = [];
+            for (var i in params)
+            {
+                if (params.hasOwnProperty(i))
+                {
+                    parts.push(encodeURIComponent(i) + '=' + encodeURIComponent(params[i]));
+                }
+            }
+            return parts.join("&")+"&";
+        },
+        // Evaluates a script in a global context
+        // Workarounds based on findings by Jim Driscoll
+        // http://weblogs.java.net/blog/driscoll/archive/2009/09/08/eval-javascript-global-context
+        globalEval: function( data ) {
+            var rnotwhite = /\S/;
+            if ( data && rnotwhite.test( data ) ) {
+                // We use execScript on Internet Explorer
+                // We use an anonymous function so that context is window
+                // rather than jQuery in Firefox
+                ( window.execScript || function( data ) {
+                    window[ "eval" ].call( window, data );
+                } )( data );
+            }
+        },
 	    evalScript:function(text){
 			if (isSafari) {
 				var waitUntilLoaded = function(){
@@ -2855,16 +2962,80 @@ SUGAR.util = function () {
             while(result && result.index > lastIndex){
             	lastIndex = result.index
 				try{
-					var script = document.createElement('script');
-                  	script.type= 'text/javascript';
+                    // Bug #49205 : Subpanels fail to load when selecting subpanel tab
+                    // Change approach to handle javascripts included to body of ajax response.
+                    // To load & run javascripts and inline javascript in correct order load them as synchronous requests
+                    // JQuery library uses this approach to eval scripts
                   	if(result[1].indexOf("src=") > -1){
 						var srcRegex = /.*src=['"]([a-zA-Z0-9_\-\&\/\.\?=:-]*)['"].*/igm;
 						var srcResult =  result[1].replace(srcRegex, '$1');
-						script.src = srcResult;
+
+                        // Check is ulr cross domain or not
+                        var r1 = /:\/\//igm;
+                        if ( r1.test(srcResult) && srcResult.indexOf(window.location.hostname) == -1 )
+                        {
+                            // if script is cross domain it cannot be loaded via ajax request
+                            // try load script asynchronous by creating script element in the body
+                            // YUI 3.3 doesn't allow load scrips synchronously
+                            // YUI 3.5 do it
+                            YUI().use('get', function (Y)
+                            {
+                                var url = srcResult;
+                                Y.Get.script(srcResult,
+                                {
+                                    autopurge: false,
+                                    onSuccess : function(o) {  },
+                                    onFailure: function(o) { },
+                                    onTimeout: function(o) { }
+                                });
+                            });
+                            // TODO: for YUI 3.5 - load scripts as script object synchronous
+                            /*
+                            YUI().use('get', function (Y) {
+                                var url = srcResult;
+                                Y.Get.js([{url: url, async: false}], function (err) {});
+                            });
+                            */
+                        }
+                        else
+                        {
+                            // Bug #49205 : Subpanels fail to load when selecting subpanel tab
+                            // Create a YUI instance using the io-base module.
+                            (function (srcResult) {
+                                YUI().use("io-base",function(Y)
+                                {
+                                    var cfg,response;
+                                    cfg={
+                                        method:'GET',
+                                        sync:true,
+                                        on:{
+                                            success:function(transactionid,response,arguments)
+                                            {
+                                                SUGAR.util.globalEval(response.responseText);
+                                            }
+                                        }
+                                    };
+                                    // Call synchronous request to load javascript content
+                                    // restonse will be processed in success function
+                                    response=Y.io(srcResult,cfg);
+                                });
+                            })(srcResult);
+                        }
                   	}else{
-                  		script.text = result[2];
+                        // Bug #49205 : Subpanels fail to load when selecting subpanel tab
+                        // execute script in global context
+                        // Bug #57288 : don't eval with html comment-out script; that causes syntax error in IE
+                        var srcRegex = /<!--([\s\S]*?)-->/;
+                        var srcResult = srcRegex.exec(result[2]);
+                        if (srcResult && srcResult.index > -1)
+                        {
+                            SUGAR.util.globalEval(srcResult[1]);
+                        }
+                        else
+                        {
+                            SUGAR.util.globalEval(result[2]);
+                        }
                   	}
-                  	document.body.appendChild(script);
 	              }
 	              catch(e) {
                       if(typeof(console) != "undefined" && typeof(console.log) == "function")
@@ -2982,7 +3153,7 @@ SUGAR.util = function () {
 					try {
 						if (typeof appendMode != 'undefined' && appendMode)
 						{
-							theDiv.innerHTML += data.responseText;
+							theDiv.insertAdjacentHTML('beforeend', data.responseText);
 						}
 						else
 						{
@@ -3345,14 +3516,15 @@ SUGAR.util = function () {
                     if(isIE){
                         //IE on a Mac? Not possible, but let's assign alt anyways for completions sake
                         controlKey = 'Alt+';
-                    }else if(isWK){
+                    }else if(isWK || isFF){
                         //Chrome or safari on a mac
+                        //firefox moved to webkit standard starting with FF14
                         controlKey = 'Ctrl+Opt+';
                     }else if(isOP){
                         //Opera on a mac
                         controlKey = 'Shift+Esc: ';
                     }else{
-                        //default FF and everything else on a mac
+                        //default for everything else on a mac
                         controlKey = 'Ctrl+';
                     }
                 }else{
@@ -3505,8 +3677,17 @@ SUGAR.savedViews = function() {
 			SUGAR.tabChooser.movementCallback(document.getElementById('display_tabs_td').getElementsByTagName('select')[0]);
 
 			// This check is needed for the Activities module (Calls/Meetings/Tasks).
-			if (document.search_form.orderBy)
-				document.search_form.orderBy.options.value = SUGAR.savedViews.selectedOrderBy;
+            if (document.search_form.orderBy)
+            {
+                if (document.search_form.orderBy.length > 1 && document.search_form.orderBy[1].type == 'select-one')
+                {
+                    document.search_form.orderBy[1].options.value = SUGAR.savedViews.selectedOrderBy;
+                }
+                else
+                {
+                    document.search_form.orderBy.options.value = SUGAR.savedViews.selectedOrderBy;
+                }
+            }
 
 			// handle direction
 			if(SUGAR.savedViews.selectedSortOrder == 'DESC') document.getElementById('sort_order_desc_radio').checked = true;
@@ -3538,6 +3719,22 @@ SUGAR.searchForm = function() {
 	                    }
 					}
 				}
+
+                //clear thesearch form accesekeys and reset them to the appropriate link
+                adv = document.getElementById('advanced_search_link');
+                bas = document.getElementById('basic_search_link');
+                adv.setAttribute('accesskey','');
+                bas.setAttribute('accesskey','');
+                a_key = SUGAR.language.get("app_strings", "LBL_ADV_SEARCH_LNK_KEY");
+
+                //reset the ccesskey based on theview
+                if(theView === 'advanced_search'){
+
+                    bas.setAttribute('accesskey',a_key);
+                }else{
+                    adv.setAttribute('accesskey',a_key);
+                }
+                
 				// show the good search form.
 				document.getElementById(module + theView + 'SearchForm').style.display = '';
                 //if its not the first tab show there is a previous tab.
@@ -3561,6 +3758,11 @@ SUGAR.searchForm = function() {
                          }
                      }
                  }
+                // Remove the previously selected div, so that only data from current div to be sent as form data to the server-side
+                if (document.getElementById(module + thepreviousView + '_search' + 'SearchForm'))
+                {
+                    document.getElementById(module + thepreviousView + '_search' + 'SearchForm').innerHTML = '';
+                }
 			}
 
 			// if tab is not cached
@@ -3631,9 +3833,20 @@ SUGAR.searchForm = function() {
 
                 if ( elemType == 'text' || elemType == 'textarea' || elemType == 'password' ) {
                     elem.value = '';
-                }
-                else if ( elemType == 'select' || elemType == 'select-one' || elemType == 'select-multiple' ) {
+                } else if (elemType == 'select-one') {
                     // We have, what I hope, is a select box, time to unselect all options
+                    var optionList = elem.options,
+                        selectedIndex = 0;
+                    for (var ii = 0; ii < optionList.length; ii++) {
+                        if (optionList[ii].value == '') {
+                            selectedIndex = ii;
+                            break;
+                        }
+                    }
+                    if (optionList.length > 0) {
+                        optionList[selectedIndex].selected = "selected";
+                    }
+                } else if (elemType == 'select-multiple') {
                     var optionList = elem.options;
                     for ( var ii = 0 ; ii < optionList.length ; ii++ ) {
                         optionList[ii].selected = false;
@@ -3644,21 +3857,46 @@ SUGAR.searchForm = function() {
                     elem.selected = false;
                 }
                 else if ( elemType == 'hidden' ) {
-                    // We only want to reset the hidden values that link to the select boxes.
-                    // _c custom field kludge added to fix Bug 41384
-                    if ( ( elem.name.length > 3 && elem.name.substring(elem.name.length-3) == '_id' )
-                         || ((elem.name.length > 9) && (elem.name.substring(elem.name.length - 9) == '_id_basic'))
-                         || ( elem.name.length > 12 && elem.name.substring(elem.name.length-12) == '_id_advanced' )
-                         || ( elem.name.length > 2 && elem.name.substring(elem.name.length-2) == '_c' )
-                         || ((elem.name.length > 8) && (elem.name.substring(elem.name.length - 8) == '_c_basic'))
-                         || ( elem.name.length > 11 && elem.name.substring(elem.name.length-11) == '_c_advanced' ) )
+                    if (
+                        // For bean selection
+                        elem.name.indexOf("_id") != -1
+                        // For custom fields
+                        || elem.name.indexOf("_c") != -1
+                        // For advanced fields, like team collection, or datetime fields
+                        || elem.name.indexOf("_advanced") != -1
+                        )
                     {
                         elem.value = '';
                     }
                 }
             }
+
+            // If there are any collections
+            if (typeof(collection) !== 'undefined')
+            {
+                // Loop through all the collections on the page and run clean_up()
+                for (key in collection)
+                {
+                    // Clean up only removes blank fields, if any
+                    collection[key].clean_up();
+                }
+            }
+
+            SUGAR.searchForm.clearBasicSearchOrderToDefault(form);
 			SUGAR.savedViews.clearColumns = true;
-		}
+		},
+        // This function sets sorting to default Sugar values after BasicSearch Clear button is pressed
+        clearBasicSearchOrderToDefault: function(form)
+        {
+            if(form.elements['searchFormTab']){
+                var formType = form.elements['searchFormTab'].value;
+                if (formType == 'basic_search')
+                {
+                    form.elements['orderBy'].value = 'DATE_ENTERED';
+                    form.elements['sortOrder'].value = 'DESC';
+                }
+            }
+        }
 	};
 }();
 // Code for the column/tab chooser used on homepage and in admin section
@@ -4222,16 +4460,16 @@ function open_popup(module_name, width, height, initial_filter, close_popup, hid
 		+ ',height=' + height
 		+ ',resizable=1,scrollbars=1';
 
-	if (popup_mode == '' && popup_mode == 'undefined') {
+	if (popup_mode == '' || popup_mode == undefined) {
 		popup_mode='single';
 	}
 	URL+='&mode='+popup_mode;
-	if (create == '' && create == 'undefined') {
+	if (create == '' || create == undefined) {
 		create = 'false';
 	}
 	URL+='&create='+create;
 
-	if (metadata != '' && metadata != 'undefined') {
+	if (metadata != '' && metadata != undefined) {
 		URL+='&metadata='+metadata;
 	}
 
@@ -4243,7 +4481,8 @@ function open_popup(module_name, width, height, initial_filter, close_popup, hid
 		var request_data = popup_request_data;
 	}
     var field_to_name_array_url = '';
-    if (request_data && request_data.field_to_name_array != 'undefined') {
+
+    if (request_data && request_data.field_to_name_array != undefined) {
         for(var key in request_data.field_to_name_array) {
             if ( key.toLowerCase() != 'id' ) {
                 field_to_name_array_url += '&field_to_name[]='+encodeURIComponent(key.toLowerCase());
@@ -4665,11 +4904,13 @@ setEmailPasswordDisplay: function(id, exists, formName) {
 	pwd = document.getElementById(id);
 	if(!pwd || !link) return;
 	if(exists) {
+            pwd.disabled = true;
     	pwd.style.display = 'none';
     	link.style.display = '';
         if(typeof(formName) != 'undefined')
             removeFromValidate(formName, id);
 	} else {
+            pwd.disabled = false;
     	pwd.style.display = '';
     	link.style.display = 'none';
 	}
@@ -4679,6 +4920,7 @@ setEmailPasswordEdit: function(id) {
 	link = document.getElementById(id+'_link');
 	pwd = document.getElementById(id);
 	if(!pwd || !link) return;
+        pwd.disabled = false;
 	pwd.style.display = '';
 	link.style.display = 'none';
 },
@@ -4784,4 +5026,26 @@ SUGAR.MultiEnumAutoComplete.getMultiSelectValuesFromKeys = function(options_inde
         }
     }
     return final_arr;
+}
+
+function convertReportDateTimeToDB(dateValue, timeValue)
+{
+    var date_match = dateValue.match(date_reg_format);
+    var time_match = timeValue.match(/([0-9]{1,2})\:([0-9]{1,2})([ap]m)/);
+    if ( date_match != null && time_match != null) {
+        time_match[1] = parseInt(time_match[1]);
+        if (time_match[3] == 'pm') {
+            time_match[1] = time_match[1] + 12;
+            if (time_match[1] >= 24) {
+                time_match[1] = time_match[1] - 24;
+            }
+        } else if (time_match[3] == 'am' && time_match[1] == 12) {
+            time_match[1] = 0;
+        }
+        if (time_match[1] < 10) {
+            time_match[1] = '0' + time_match[1];
+        }
+        return date_match[date_reg_positions['Y']] + "-"+date_match[date_reg_positions['m']] + "-"+date_match[date_reg_positions['d']] + ' '+ time_match[1] + ':' + time_match[2] + ':00';
+    }
+    return '';
 }

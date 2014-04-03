@@ -2,7 +2,7 @@
 if(!defined('sugarEntry') || !sugarEntry) die('Not A Valid Entry Point');
 /*********************************************************************************
  * SugarCRM Community Edition is a customer relationship management program developed by
- * SugarCRM, Inc. Copyright (C) 2004-2012 SugarCRM Inc.
+ * SugarCRM, Inc. Copyright (C) 2004-2013 SugarCRM Inc.
  * 
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Affero General Public License version 3 as published by the
@@ -103,7 +103,8 @@ if(isset($_REQUEST['recaptcha_challenge_field']) && isset($_REQUEST['recaptcha_r
 $redirect='1';
 if (isset($_REQUEST['guid']))
  	{
- 	$Q="select * from users_password_link where id='".$_REQUEST['guid']."' and deleted='0'";
+ 	// Change 'deleted = 0' clause to 'COALESCE(deleted, 0) = 0' because by default the values were NULL
+ 	$Q = "SELECT * FROM users_password_link WHERE id = '" . $_REQUEST['guid'] . "' AND COALESCE(deleted, 0) = '0'";
  	$result =$GLOBALS['db']->limitQuery($Q,0,1,false);
 	$row = $GLOBALS['db']->fetchByAssoc($result);
 	if (!empty($row)){

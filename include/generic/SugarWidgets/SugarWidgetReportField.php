@@ -2,7 +2,7 @@
 if(!defined('sugarEntry') || !sugarEntry) die('Not A Valid Entry Point');
 /*********************************************************************************
  * SugarCRM Community Edition is a customer relationship management program developed by
- * SugarCRM, Inc. Copyright (C) 2004-2012 SugarCRM Inc.
+ * SugarCRM, Inc. Copyright (C) 2004-2013 SugarCRM Inc.
  * 
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Affero General Public License version 3 as published by the
@@ -134,9 +134,33 @@ class SugarWidgetReportField extends SugarWidgetField
 				return $alias;
     	}
 
-    	// Removed ISNULL check as per bug 49452
-		$alias = "{$layout_def['group_function']}($alias)";
-		//$this->reporter->db->convert($alias, "IFNULL", array(0)));
+        // Use IFNULL only if it's not AVG aggregate
+        // because it adds NULL rows to the count when it should not, thus getting wrong result
+        if ($layout_def['group_function'] != 'avg') {
+            $alias = $this->reporter->db->convert($alias, 'IFNULL', array(0));
+        }
+
+        // for a field with type='currency' conversion of values into a user-preferred currency
+        if ($layout_def['type'] == 'currency' && strpos($layout_def['name'], '_usdoll') === false) {
+            $currency = $this->reporter->currency_obj;
+            $currency_alias = isset($layout_def['currency_alias'])
+                ? $layout_def['currency_alias'] : $currency->table_name;
+            $query = $this->reporter->db->convert($currency_alias.".conversion_rate", "IFNULL", array(1));
+            // We need to use convert() for AVG because of Oracle
+            if ($layout_def['group_function'] != 'avg') {
+                $alias = "{$layout_def['group_function']}($alias/{$query})*{$currency->conversion_rate}";
+            } else {
+                $alias = $this->reporter->db->convert("$alias/$query", "AVG") . " * {$currency->conversion_rate}";
+            }
+        } else {
+            // We need to use convert() for AVG because of Oracle
+            if ($layout_def['group_function'] != 'avg') {
+                $alias = "{$layout_def['group_function']}($alias)";
+            } else {
+                $alias = $this->reporter->db->convert($alias, "AVG");
+            }
+
+        }
 	}
 
 	$reportAlias[$alias] = $layout_def;
@@ -158,7 +182,11 @@ class SugarWidgetReportField extends SugarWidgetField
  {
 	if(!empty($this->reporter->all_fields[$layout_def['column_key']])) $field_def = $this->reporter->all_fields[$layout_def['column_key']];
 
-	if ( ! empty( $field_def['sort_on']))
+    if (!empty($layout_def['group_function']))
+    {
+        $order_by = $this->_get_column_alias($layout_def);
+    }
+    elseif (!empty($field_def['sort_on']))
 	{
 			$order_by = $layout_def['table_alias'].".".$field_def['sort_on'];
             if(!empty($field_def['sort_on2']))
@@ -200,7 +228,7 @@ class SugarWidgetReportField extends SugarWidgetField
                 $sort_by ='';
                 if ( ! empty($layout_def['table_key']) && ! empty($layout_def['name']) ) {
                 	if (! empty($layout_def['group_function']) && $layout_def['group_function'] == 'count') {
-                    	$sort_by = 'count';
+                        $sort_by = $layout_def['table_key'].":".'count';
                 	} else {
                     	$sort_by = $layout_def['table_key'].":".$layout_def['name'];
                         if ( ! empty($layout_def['column_function'])) {
@@ -250,14 +278,16 @@ class SugarWidgetReportField extends SugarWidgetField
  {
         $alias_arr = array();
 
-				if ($layout_def['table_key'] == 'self' && !empty($layout_def['name']) && $layout_def['name'] == 'id')
-				{
-					return 'primaryid';
-				}
+	if (!empty($layout_def['table_key']) && $layout_def['table_key'] == 'self' && !empty($layout_def['name']) && $layout_def['name'] == 'id')
+	{
+		return 'primaryid';
+	}
 
+     // Bug: 44605
+     // this comment is being added to trigger the upgrade package
         if ( ! empty($layout_def['group_function']) && $layout_def['group_function']=='count')
         {
-                return 'count';
+                return $layout_def['table_alias'] . '__count';
         }
 
         if ( ! empty($layout_def['table_alias']))
@@ -320,8 +350,10 @@ class SugarWidgetReportField extends SugarWidgetField
 
  function queryFilterNot_Empty($layout_def)
  {
+     /** @var $db DBManager */
+     $db = $this->reporter->db;
      $column = $this->_get_column_select($layout_def);
-     return "($column IS NOT NULL AND $column <> ".$this->reporter->db->emptyValue($layout_def['type']).")";
+     return "(coalesce(" . $db->convert($column, "length") . ",0) > 0)\n";
  }
 
 }

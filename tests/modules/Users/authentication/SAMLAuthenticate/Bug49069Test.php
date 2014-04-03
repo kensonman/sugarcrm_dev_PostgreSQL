@@ -1,7 +1,7 @@
 <?php
 /*********************************************************************************
  * SugarCRM Community Edition is a customer relationship management program developed by
- * SugarCRM, Inc. Copyright (C) 2004-2012 SugarCRM Inc.
+ * SugarCRM, Inc. Copyright (C) 2004-2013 SugarCRM Inc.
  * 
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Affero General Public License version 3 as published by the
@@ -88,15 +88,6 @@ class Bug49069Test extends  Sugar_PHPUnit_Framework_TestCase
             'Location: index.php?module=foo&action=bar&record=123',
             $url
             );
-
-
-        $this->assertTrue(!empty($_REQUEST['user_name']), 'Assert that we automatically set a user_name in $_REQUEST');
-        $this->assertEquals('onelogin', $_REQUEST['user_name']);
-        $this->assertTrue(!empty($_REQUEST['user_password']), 'Assert that we automatically set a user_password in $_REQUEST');
-        $this->assertEquals('onelogin', $_REQUEST['user_password']);
-
-
-
     }
 
     public function testDefaultUserNamePasswordSet()

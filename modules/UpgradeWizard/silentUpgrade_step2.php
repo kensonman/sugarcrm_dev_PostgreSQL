@@ -2,7 +2,7 @@
 
 /*********************************************************************************
  * SugarCRM Community Edition is a customer relationship management program developed by
- * SugarCRM, Inc. Copyright (C) 2004-2012 SugarCRM Inc.
+ * SugarCRM, Inc. Copyright (C) 2004-2013 SugarCRM Inc.
  * 
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Affero General Public License version 3 as published by the
@@ -177,6 +177,13 @@ function rebuildRelations($pre_path = '')
 	include($pre_path.'modules/ACL/install_actions.php');
 }
 
+//Bug 52872. Dies if the request does not come from CLI.
+$sapi_type = php_sapi_name();
+if (substr($sapi_type, 0, 3) != 'cli') {
+    die("This is command-line only script");
+}
+//End of #52872
+
 // only run from command line
 if(isset($_SERVER['HTTP_USER_AGENT'])) {
 	fwrite(STDERR,'This utility may only be run from the command line or command prompt.');
@@ -259,8 +266,8 @@ $errors = array();
 	$zip_from_dir	= substr($patchName, 0, strlen($patchName) - 4); // patch folder name (minus ".zip")
 	$path			= $argv[2]; // custom log file, if blank will use ./upgradeWizard.log
     $db				= &DBManagerFactory::getInstance();
-	$UWstrings		= return_module_language('en_us', 'UpgradeWizard');
-	$adminStrings	= return_module_language('en_us', 'Administration');
+	$UWstrings		= return_module_language('en_us', 'UpgradeWizard', true);
+	$adminStrings	= return_module_language('en_us', 'Administration', true);
     $app_list_strings = return_app_list_strings_language('en_us');
 	$mod_strings	= array_merge($adminStrings, $UWstrings);
 	$subdirs		= array('full', 'langpack', 'module', 'patch', 'theme', 'temp');
@@ -466,10 +473,11 @@ logThis('End rebuild relationships.', $path);
 
 include("$unzip_dir/manifest.php");
 $ce_to_pro_ent = isset($manifest['name']) && ($manifest['name'] == 'SugarCE to SugarPro' || $manifest['name'] == 'SugarCE to SugarEnt'  || $manifest['name'] == 'SugarCE to SugarCorp' || $manifest['name'] == 'SugarCE to SugarUlt');
-$origVersion = getSilentUpgradeVar('origVersion');
-if(!$origVersion){
+$sugar_version = getSilentUpgradeVar('origVersion');
+if (!$sugar_version)
+{
     global $silent_upgrade_vars_loaded;
-    logThis("Error retrieving silent upgrade var for origVersion: cache dir is {$GLOBALS['sugar_config']['cache_dir']} -- full cache for \$silent_upgrade_vars_loaded is ".var_export($silent_upgrade_vars_loaded, true), $path);
+    logThis("Error retrieving silent upgrade var for sugar_version: cache dir is {$GLOBALS['sugar_config']['cache_dir']} -- full cache for \$silent_upgrade_vars_loaded is ".var_export($silent_upgrade_vars_loaded, true), $path);
 }
 
 
@@ -503,10 +511,6 @@ if($ce_to_pro_ent) {
     }
 }
 
-
-/*
-*/
-
 //bug: 37214 - merge config_si.php settings if available
 logThis('Begin merge_config_si_settings', $path);
 merge_config_si_settings(true, '', '', $path);
@@ -517,27 +521,11 @@ logThis('Begin upgrade_connectors', $path);
 upgrade_connectors();
 logThis('End upgrade_connectors', $path);
 
-// Enable the InsideView connector by default
-if($origVersion < '621' && function_exists('upgradeEnableInsideViewConnector')) {
-    logThis("Looks like we need to enable the InsideView connector\n",$path);
-    upgradeEnableInsideViewConnector($path);
-}
-
-
-//bug: 36845 - ability to provide global search support for custom modules
-/*
-*/
-
-//Upgrade system displayed tabs and subpanels
-if(function_exists('upgradeDisplayedTabsAndSubpanels'))
-{
-	upgradeDisplayedTabsAndSubpanels($origVersion);
-}
 
 //Unlink files that have been removed
 if(function_exists('unlinkUpgradeFiles'))
 {
-	unlinkUpgradeFiles($origVersion);
+	unlinkUpgradeFiles($sugar_version);
 }
 
 if(function_exists('rebuildSprites') && function_exists('imagecreatetruecolor'))
@@ -546,7 +534,7 @@ if(function_exists('rebuildSprites') && function_exists('imagecreatetruecolor'))
 }
 
 //Run repairUpgradeHistoryTable
-if($origVersion < '650' && function_exists('repairUpgradeHistoryTable'))
+if (version_compare($sugar_version, '6.5.0', '<') && function_exists('repairUpgradeHistoryTable'))
 {
     repairUpgradeHistoryTable();
 }
@@ -586,6 +574,3 @@ if(count($errors) > 0) {
 	echo "******** Run Repair -> Rebuild Relationships  **********************\n";
 	echo "********************************************************************\n";
 }
-
-
-?>

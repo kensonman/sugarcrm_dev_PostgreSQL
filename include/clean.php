@@ -1,7 +1,7 @@
 <?php
 /*********************************************************************************
  * SugarCRM Community Edition is a customer relationship management program developed by
- * SugarCRM, Inc. Copyright (C) 2004-2012 SugarCRM Inc.
+ * SugarCRM, Inc. Copyright (C) 2004-2013 SugarCRM Inc.
  * 
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Affero General Public License version 3 as published by the
@@ -88,7 +88,7 @@ class SugarCleaner
         $config = HTMLPurifier_Config::createDefault();
 
         if(!is_dir(sugar_cached("htmlclean"))) {
-            create_cache_directory("htmlclean");
+            create_cache_directory("htmlclean/");
         }
         $config->set('HTML.Doctype', 'XHTML 1.0 Transitional');
         $config->set('Core.Encoding', 'UTF-8');
@@ -100,20 +100,23 @@ class SugarCleaner
         $config->set('HTML.TidyLevel', 'light');
         $config->set('HTML.ForbiddenElements', array('body' => true, 'html' => true));
         $config->set('AutoFormat.RemoveEmpty', false);
+        $config->set('Cache.SerializerPermissions', 0775);
         // for style
         //$config->set('Filter.ExtractStyleBlocks', true);
         $config->set('Filter.ExtractStyleBlocks.TidyImpl', false); // can't use csstidy, GPL
-        // for object
-        $config->set('HTML.SafeObject', true);
-        // for embed
-        $config->set('HTML.SafeEmbed', true);
+        if(!empty($GLOBALS['sugar_config']['html_allow_objects'])) {
+            // for object
+            $config->set('HTML.SafeObject', true);
+            // for embed
+            $config->set('HTML.SafeEmbed', true);
+        }
         $config->set('Output.FlashCompat', true);
         // for iframe and xmp
         $config->set('Filter.Custom',  array(new HTMLPurifier_Filter_Xmp()));
         // for link
         $config->set('HTML.DefinitionID', 'Sugar HTML Def');
         $config->set('HTML.DefinitionRev', 2);
-        $config->set('Cache.DefinitionImpl', null); // TODO: remove this later!
+        $config->set('Cache.SerializerPath', sugar_cached('htmlclean/'));
         // IDs are namespaced
         $config->set('Attr.EnableID', true);
         $config->set('Attr.IDPrefix', 'sugar_text_');
@@ -262,8 +265,11 @@ class SugarURIFilter extends HTMLPurifier_URIFilter
         // Here we try to block URLs that may be used for nasty XSRF stuff by
         // referring back to Sugar URLs
         // allow URLs that don't start with /? or /index.php?
-		if(!empty($uri->path) && $uri->path != '/' && strtolower(substr($uri->path, -10)) != '/index.php') {
-			return true;
+		if(!empty($uri->path) && $uri->path != '/') {
+		    $lpath = strtolower($uri->path);
+		    if(substr($lpath, -10) != '/index.php' && $lpath != 'index.php') {
+    			return true;
+	    	}
 		}
 
         $query_items = array();

@@ -1,7 +1,7 @@
 <?php
 /*********************************************************************************
  * SugarCRM Community Edition is a customer relationship management program developed by
- * SugarCRM, Inc. Copyright (C) 2004-2012 SugarCRM Inc.
+ * SugarCRM, Inc. Copyright (C) 2004-2013 SugarCRM Inc.
  * 
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Affero General Public License version 3 as published by the
@@ -105,6 +105,7 @@ class RESTAPI3Test extends Sugar_PHPUnit_Framework_TestCase
         $GLOBALS['db']->query("DELETE FROM tasks WHERE name like 'UNIT TEST%' ");
         $GLOBALS['db']->query("DELETE FROM meetings WHERE name like 'UNIT TEST%' ");
         SugarTestUserUtilities::removeAllCreatedAnonymousUsers();
+        unset($GLOBALS['reload_vardefs']);
 	}
 
     protected function _makeRESTCall($method,$parameters)
@@ -417,11 +418,6 @@ class RESTAPI3Test extends Sugar_PHPUnit_Framework_TestCase
 
         $sh = new SugarWebServiceUtilv3();
 
-        $mobileResult = $this->_makeRESTCall('get_available_modules', array('session' => $session, 'filter' => 'mobile' ));
-        $mobileResultExpected = $sh->get_visible_mobile_modules($fullResult['modules']);
-        $mobileResultExpected = md5(serialize(array('modules' => $mobileResultExpected)));
-        $mobileResult = md5(serialize($mobileResult));
-        $this->assertEquals($mobileResultExpected, $mobileResult, "Unable to get all visible mobile modules");
 
         $defaultResult = $this->_makeRESTCall('get_available_modules', array('session' => $session, 'filter' => 'default' ));
         $defaultResult = md5(serialize($defaultResult['modules']));
@@ -450,7 +446,6 @@ class RESTAPI3Test extends Sugar_PHPUnit_Framework_TestCase
         //Test a fake module
         $result = $this->_makeRESTCall('get_module_fields_md5', array('session' => $session, 'module' => 'BadModule' ));
         $this->assertEquals('Module Does Not Exist', $result['name']);
-        unset($GLOBALS['reload_vardefs']);
     }
 
     public function testAddNewAccountAndThenDeleteIt()
@@ -721,11 +716,6 @@ class RESTAPI3Test extends Sugar_PHPUnit_Framework_TestCase
             array(
                 'module' => 'Contacts',
                 'type' => 'default',
-                'view' => 'subpanel',
-            ),
-            array(
-                'module' => 'Leads',
-                'type' => 'wireless',
                 'view' => 'subpanel',
             ),
         );

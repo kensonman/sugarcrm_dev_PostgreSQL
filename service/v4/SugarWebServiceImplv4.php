@@ -2,7 +2,7 @@
 if(!defined('sugarEntry'))define('sugarEntry', true);
 /*********************************************************************************
  * SugarCRM Community Edition is a customer relationship management program developed by
- * SugarCRM, Inc. Copyright (C) 2004-2012 SugarCRM Inc.
+ * SugarCRM, Inc. Copyright (C) 2004-2013 SugarCRM Inc.
  * 
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Affero General Public License version 3 as published by the
@@ -73,7 +73,7 @@ class SugarWebServiceImplv4 extends SugarWebServiceImplv3_1 {
         //rrs
         $system_config = new Administration();
         $system_config->retrieveSettings('system');
-        $authController = new AuthenticationController((!empty($sugar_config['authenticationClass'])? $sugar_config['authenticationClass'] : 'SugarAuthenticate'));
+        $authController = new AuthenticationController();
         //rrs
         if(!empty($user_auth['encryption']) && $user_auth['encryption'] === 'PLAIN' && $authController->authController->userAuthenticateClass != "LDAPAuthenticateUser")
         {
@@ -285,6 +285,9 @@ class SugarWebServiceImplv4 extends SugarWebServiceImplv3_1 {
         if($offset == '' || $offset == -1){
             $offset = 0;
         } // if
+        if($deleted){
+            $deleted = -1;
+        }
         if($using_cp){
             $response = $seed->retrieveTargetList($query, $select_fields, $offset,-1,-1,$deleted);
         }else

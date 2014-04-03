@@ -1,7 +1,7 @@
 <?php
 /*********************************************************************************
  * SugarCRM Community Edition is a customer relationship management program developed by
- * SugarCRM, Inc. Copyright (C) 2004-2012 SugarCRM Inc.
+ * SugarCRM, Inc. Copyright (C) 2004-2013 SugarCRM Inc.
  * 
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Affero General Public License version 3 as published by the
@@ -101,7 +101,7 @@ class JsChart extends SugarChart {
 		$this->saveJsonFile($json);
 		$this->ss->assign("chartId", $this->chartId);
 		$this->ss->assign("filename", $this->jsonFilename);
-		global $mod_strings;
+		global $mod_strings, $app_strings;
 		if (isset($mod_strings['LBL_REPORT_SHOW_CHART']))
 		    $this->ss->assign("showchart", $mod_strings['LBL_REPORT_SHOW_CHART']);
 
@@ -119,7 +119,7 @@ class JsChart extends SugarChart {
 		$chartConfig['imageExportType'] = $this->image_export_type;
 		$this->ss->assign("config", $chartConfig);
 		if($json == "No Data") {
-			$this->ss->assign("error", "No Data");
+			$this->ss->assign("error", $app_strings['LBL_NO_DATA']);
 		}
 
 		if(!$this->isSupported($this->chartType)) {
@@ -134,7 +134,7 @@ class JsChart extends SugarChart {
 		global $sugar_config, $current_user, $current_language;
 		$this->id = $id;
 		$this->chartId = $id;
-		$this->xmlFile = (!$xmlFile) ? sugar_cached("xml/{$current_user->id}_{$this->id}.xml") : $xmlFile;
+		$this->xmlFile = (!$xmlFile) ? sugar_cached("xml/".$current_user->getUserPrivGuid()."_{$this->id}.xml") : $xmlFile;
 
 
 		$style = array();
@@ -150,7 +150,7 @@ class JsChart extends SugarChart {
 		foreach($this->getChartConfigParams($xmlStr) as $key => $value) {
 			$chartConfig[$key] = $value;
 		}
-		
+
 		$chartConfig['imageExportType'] = $this->image_export_type;
 		$this->ss->assign("config", $chartConfig);
 
@@ -242,11 +242,11 @@ class JsChart extends SugarChart {
 	}
 
   	function buildProperties($xmlstr) {
-		$content = $this->tab("'properties': [\n",1);
+		$content = $this->tab("\"properties\": [\n",1);
 		$properties = array();
 		$xml = new SimpleXMLElement($xmlstr);
 		foreach($xml->properties->children() as $property) {
-			$properties[] = $this->tab("'".$property->getName()."':"."'".$this->processSpecialChars($property)."'",2);
+			$properties[] = $this->tab("\"".$property->getName()."\":"."\"".$this->processSpecialChars($property)."\"",2);
 		}
 		$content .= $this->tab("{\n",1);
 		$content .= join(",\n",$properties)."\n";
@@ -256,11 +256,11 @@ class JsChart extends SugarChart {
 	}
 
   	function buildLabelsBarChartStacked($xmlstr) {
-		$content = $this->tab("'label': [\n",1);
+		$content = $this->tab("\"label\": [\n",1);
 		$labels = array();
 		$xml = new SimpleXMLElement($xmlstr);
 		foreach($xml->data->group[0]->subgroups->group as $group) {
-			$labels[] = $this->tab("'".$this->processSpecialChars($group->title)."'",2);
+			$labels[] = $this->tab("\"".$this->processSpecialChars($group->title)."\"",2);
 		}
 		$content .= join(",\n",$labels)."\n";
 		$content .= $this->tab("],\n",1);
@@ -277,11 +277,11 @@ class JsChart extends SugarChart {
             return $this->buildLabelsBarChartStacked($xmlstr);
         }
 
-        $content = $this->tab("'label': [\n",1);
+        $content = $this->tab("\"label\": [\n",1);
 		$labels = array();
 
 		foreach($xml->data->group as $group) {
-			$labels[] = $this->tab("'".$this->processSpecialChars($group->title)."'",2);
+			$labels[] = $this->tab("\"".$this->processSpecialChars($group->title)."\"",2);
 		}
 		$labelStr = join(",\n",$labels)."\n";
 		$content .= $labelStr;
@@ -290,31 +290,35 @@ class JsChart extends SugarChart {
 	}
 
 	function buildDataBarChartStacked($xmlstr) {
-		$content = $this->tab("'values': [\n",1);
+		$content = $this->tab("\"values\": [\n",1);
 		$data = array();
 		$xml = new SimpleXMLElement($xmlstr);
 		foreach($xml->data->group as $group) {
 			$groupcontent = $this->tab("{\n",1);
-			$groupcontent .= $this->tab("'label': '".$this->processSpecialChars($group->title)."',\n",2);
-			$groupcontent .= $this->tab("'gvalue': '{$group->value}',\n",2);
-			$groupcontent .= $this->tab("'gvaluelabel': '{$group->label}',\n",2);
+			$groupcontent .= $this->tab("\"label\": \"".$this->processSpecialChars($group->title)."\",\n",2);
+			$groupcontent .= $this->tab("\"gvalue\": \"{$group->value}\",\n",2);
+			$groupcontent .= $this->tab("\"gvaluelabel\": \"{$group->label}\",\n",2);
+			if (!empty($group->id))
+			{
+				$groupcontent .= $this->tab("\"id\": \"{$group->id}\",\n",2);
+			}
 			$subgroupValues = array();
 			$subgroupValueLabels = array();
 			$subgroupLinks = array();
 			foreach($group->subgroups->group as $subgroups) {
 				$subgroupValues[] = $this->tab(($subgroups->value == "NULL") ? 0 : $subgroups->value,3);
-				$subgroupValueLabels[] = $this->tab("'".$this->processSpecialChars($subgroups->label)."'",3);
-				$subgroupLinks[] = $this->tab("'".$subgroups->link."'",3);
+				$subgroupValueLabels[] = $this->tab("\"".$this->processSpecialChars($subgroups->label)."\"",3);
+				$subgroupLinks[] = $this->tab("\"".$subgroups->link."\"",3);
 			}
 			$subgroupValuesStr = join(",\n",$subgroupValues)."\n";
 			$subgroupValueLabelsStr = join(",\n",$subgroupValueLabels)."\n";
 			$subgroupLinksStr = join(",\n",$subgroupLinks)."\n";
 
-			$groupcontent .= $this->tab("'values': [\n".$subgroupValuesStr,2);
+			$groupcontent .= $this->tab("\"values\": [\n".$subgroupValuesStr,2);
 			$groupcontent .= $this->tab("],\n",2);
-			$groupcontent .= $this->tab("'valuelabels': [\n".$subgroupValueLabelsStr,2);
+			$groupcontent .= $this->tab("\"valuelabels\": [\n".$subgroupValueLabelsStr,2);
 			$groupcontent .= $this->tab("],\n",2);
-			$groupcontent .= $this->tab("'links': [\n".$subgroupLinksStr,2);
+			$groupcontent .= $this->tab("\"links\": [\n".$subgroupLinksStr,2);
 			$groupcontent .= $this->tab("]\n",2);
 			$groupcontent .= $this->tab("}",1);
 			$data[] = $groupcontent;
@@ -325,36 +329,40 @@ class JsChart extends SugarChart {
 	}
 
 	function buildDataBarChartGrouped($xmlstr) {
-		$content = $this->tab("'values': [\n",1);
+		$content = $this->tab("\"values\": [\n",1);
 		$data = array();
 		$xml = new SimpleXMLElement($xmlstr);
 		foreach($xml->data->group as $group) {
 			$groupcontent = $this->tab("{\n",1);
-			$groupcontent .= $this->tab("'label': '".$this->processSpecialChars($group->title)."',\n",2);
-			$groupcontent .= $this->tab("'gvalue': '{$group->value}',\n",2);
-			$groupcontent .= $this->tab("'gvaluelabel': '{$group->label}',\n",2);
+			$groupcontent .= $this->tab("\"label\": \"".$this->processSpecialChars($group->title)."\",\n",2);
+			$groupcontent .= $this->tab("\"gvalue\": \"{$group->value}\",\n",2);
+			$groupcontent .= $this->tab("\"gvaluelabel\": \"{$group->label}\",\n",2);
+			if (!empty($group->id))
+			{
+				$groupcontent .= $this->tab("\"id\": \"{$group->id}\",\n",2);
+			}
 			$subgroupValues = array();
 			$subgroupValueLabels = array();
 			$subgroupLinks = array();
 			$subgroupTitles = array();
 			foreach($group->subgroups->group as $subgroups) {
 				$subgroupValues[] = $this->tab(($subgroups->value == "NULL") ? 0 : $subgroups->value,3);
-				$subgroupValueLabels[] = $this->tab("'".$subgroups->label."'",3);
-				$subgroupLinks[] = $this->tab("'".$subgroups->link."'",3);
-				$subgroupTitles[] = $this->tab("'".$this->processSpecialChars($subgroups->title)."'",3);
+				$subgroupValueLabels[] = $this->tab("\"".$subgroups->label."\"",3);
+				$subgroupLinks[] = $this->tab("\"".$subgroups->link."\"",3);
+				$subgroupTitles[] = $this->tab("\"".$this->processSpecialChars($subgroups->title)."\"",3);
 			}
 			$subgroupValuesStr = join(",\n",$subgroupValues)."\n";
 			$subgroupValueLabelsStr = join(",\n",$subgroupValueLabels)."\n";
 			$subgroupLinksStr = join(",\n",$subgroupLinks)."\n";
 			$subgroupTitlesStr = join(",\n",$subgroupTitles)."\n";
 
-			$groupcontent .= $this->tab("'values': [\n".$subgroupValuesStr,2);
+			$groupcontent .= $this->tab("\"values\": [\n".$subgroupValuesStr,2);
 			$groupcontent .= $this->tab("],\n",2);
-			$groupcontent .= $this->tab("'valuelabels': [\n".$subgroupValueLabelsStr,2);
+			$groupcontent .= $this->tab("\"valuelabels\": [\n".$subgroupValueLabelsStr,2);
 			$groupcontent .= $this->tab("],\n",2);
-			$groupcontent .= $this->tab("'links': [\n".$subgroupLinksStr,2);
+			$groupcontent .= $this->tab("\"links\": [\n".$subgroupLinksStr,2);
 			$groupcontent .= $this->tab("],\n",2);
-			$groupcontent .= $this->tab("'titles': [\n".$subgroupTitlesStr,2);
+			$groupcontent .= $this->tab("\"titles\": [\n".$subgroupTitlesStr,2);
 			$groupcontent .= $this->tab("]\n",2);
 			$groupcontent .= $this->tab("}",1);
 			$data[] = $groupcontent;
@@ -365,7 +373,7 @@ class JsChart extends SugarChart {
 	}
 
 	function buildDataBarChart($xmlstr) {
-		$content = $this->tab("'values': [\n",1);
+		$content = $this->tab("\"values\": [\n",1);
 		$data = array();
 		$xml = new SimpleXMLElement($xmlstr);
 		$groupcontent = "";
@@ -373,19 +381,23 @@ class JsChart extends SugarChart {
 
 		foreach($xml->data->group as $group) {
 		$groupcontent = $this->tab("{\n",1);
-		$groupcontent .= $this->tab("'label': [\n",2);
-		$groupcontent .= $this->tab("'".$this->processSpecialChars($group->title)."'\n",3);
+		$groupcontent .= $this->tab("\"label\": [\n",2);
+		$groupcontent .= $this->tab("\"".$this->processSpecialChars($group->title)."\"\n",3);
 		$groupcontent .= $this->tab("],\n",2);
-		$groupcontent .= $this->tab("'values': [\n",2);
+		$groupcontent .= $this->tab("\"values\": [\n",2);
 		$groupcontent .= $this->tab(($group->value == "NULL") ? 0 : $group->value."\n",3);
 		$groupcontent .= $this->tab("],\n",2);
+		if (!empty($group->id))
+		{
+			$groupcontent .= $this->tab("\"id\": \"{$group->id}\",\n",2);
+		}
 		if($group->label) {
-			$groupcontent .= $this->tab("'valuelabels': [\n",2);
-			$groupcontent .= $this->tab("'{$group->label}'\n",3);
+			$groupcontent .= $this->tab("\"valuelabels\": [\n",2);
+			$groupcontent .= $this->tab("\"{$group->label}\"\n",3);
 			$groupcontent .= $this->tab("],\n",2);
 		}
-		$groupcontent .= $this->tab("'links': [\n",2);
-		$groupcontent .= $this->tab("'{$group->link}'\n",3);
+		$groupcontent .= $this->tab("\"links\": [\n",2);
+		$groupcontent .= $this->tab("\"{$group->link}\"\n",3);
 		$groupcontent .= $this->tab("]\n",2);
 		$groupcontent .= $this->tab("}",1);
 		$groupcontentArr[] = $groupcontent;
@@ -396,11 +408,11 @@ class JsChart extends SugarChart {
 	}
 
 	  function buildLabelsPieChart($xmlstr) {
-		$content = $this->tab("'label': [\n",1);
+		$content = $this->tab("\"label\": [\n",1);
 		$labels = array();
 		$xml = new SimpleXMLElement($xmlstr);
 		foreach($xml->data->group as $group) {
-			$labels[] = $this->tab("'".$this->processSpecialChars($group->title)."'",2);
+			$labels[] = $this->tab("\"".$this->processSpecialChars($group->title)."\"",2);
 		}
 		$labelStr = join(",\n",$labels)."\n";
 		$content .= $labelStr;
@@ -410,7 +422,7 @@ class JsChart extends SugarChart {
 
 
 	function buildDataPieChart($xmlstr) {
-		$content = $this->tab("'values': [\n",1);
+		$content = $this->tab("\"values\": [\n",1);
 		$data = array();
 		$xml = new SimpleXMLElement($xmlstr);
 		$groupcontent = "";
@@ -418,17 +430,17 @@ class JsChart extends SugarChart {
 
 		foreach($xml->data->group as $group) {
 		$groupcontent = $this->tab("{\n",1);
-		$groupcontent .= $this->tab("'label': [\n",2);
-		$groupcontent .= $this->tab("'".$this->processSpecialChars($group->title)."'\n",3);
+		$groupcontent .= $this->tab("\"label\": [\n",2);
+		$groupcontent .= $this->tab("\"".$this->processSpecialChars($group->title)."\"\n",3);
 		$groupcontent .= $this->tab("],\n",2);
-		$groupcontent .= $this->tab("'values': [\n",2);
+		$groupcontent .= $this->tab("\"values\": [\n",2);
 		$groupcontent .= $this->tab("{$group->value}\n",3);
 		$groupcontent .= $this->tab("],\n",2);
-		$groupcontent .= $this->tab("'valuelabels': [\n",2);
-		$groupcontent .= $this->tab("'{$group->label}'\n",3);
+		$groupcontent .= $this->tab("\"valuelabels\": [\n",2);
+		$groupcontent .= $this->tab("\"{$group->label}\"\n",3);
 		$groupcontent .= $this->tab("],\n",2);
-		$groupcontent .= $this->tab("'links': [\n",2);
-		$groupcontent .= $this->tab("'{$group->link}'\n",3);
+		$groupcontent .= $this->tab("\"links\": [\n",2);
+		$groupcontent .= $this->tab("\"{$group->link}\"\n",3);
 		$groupcontent .= $this->tab("]\n",2);
 		$groupcontent .= $this->tab("}",1);
 		$groupcontentArr[] = $groupcontent;
@@ -441,11 +453,11 @@ class JsChart extends SugarChart {
 	}
 
 	function buildLabelsGaugeChart($xmlstr) {
-		$content = $this->tab("'label': [\n",1);
+		$content = $this->tab("\"label\": [\n",1);
 		$labels = array();
 		$xml = new SimpleXMLElement($xmlstr);
 		foreach($xml->data->group as $group) {
-			$labels[] = $this->tab("'".$this->processSpecialChars($group->title)."'",2);
+			$labels[] = $this->tab("\"".$this->processSpecialChars($group->title)."\"",2);
 		}
 		$labelStr = join(",\n",$labels)."\n";
 		$content .= $labelStr;
@@ -454,15 +466,15 @@ class JsChart extends SugarChart {
 	}
 
 	function buildDataGaugeChart($xmlstr) {
-		$content = $this->tab("'values': [\n",1);
+		$content = $this->tab("\"values\": [\n",1);
 		$data = array();
 		$xml = new SimpleXMLElement($xmlstr);
 		foreach($xml->data->group as $group) {
 			$groupcontent = $this->tab("{\n",1);
-			$groupcontent .= $this->tab("'label': '".$this->processSpecialChars($group->title)."',\n",2);
-			$groupcontent .= $this->tab("'gvalue': '{$group->value}',\n",2);
+			$groupcontent .= $this->tab("\"label\": \"".$this->processSpecialChars($group->title)."\",\n",2);
+			$groupcontent .= $this->tab("\"gvalue\": \"{$group->value}\",\n",2);
 			$finalComma = ($group->title != "GaugePosition") ? "," : "";
-			$groupcontent .= $this->tab("'gvaluelabel': '{$group->label}'{$finalComma}\n",2);
+			$groupcontent .= $this->tab("\"gvaluelabel\": \"{$group->label}\"{$finalComma}\n",2);
 			$subgroupTitles = array();
 			$subgroupValues = array();
 			$subgroupValueLabels = array();
@@ -470,26 +482,26 @@ class JsChart extends SugarChart {
 
 			if(is_object($group->subgroups->group)) {
 				foreach($group->subgroups->group as $subgroups) {
-					$subgroupTitles[] = $this->tab("'".$subgroups->title."'",3);
+					$subgroupTitles[] = $this->tab("\"".$subgroups->title."\"",3);
 					//$subgroupValues[] = $this->tab($subgroups->value,3);
 					$subgroupValues[] = $subgroups->value;
-					$subgroupValueLabels[] = $this->tab("'".$subgroups->label."'",3);
-					$subgroupLinks[] = $this->tab("'".$subgroups->link."'",3);
+					$subgroupValueLabels[] = $this->tab("\"".$subgroups->label."\"",3);
+					$subgroupLinks[] = $this->tab("\"".$subgroups->link."\"",3);
 				}
 				$subgroupTitlesStr = join(",\n",$subgroupTitles)."\n";
 				$subgroupValuesStr = join(",\n",$subgroupValues)."\n";
 				$subgroupValueLabelsStr = join(",\n",$subgroupValueLabels)."\n";
 				$subgroupLinksStr = join(",\n",$subgroupLinks)."\n";
 
-				//$groupcontent .= $this->tab("'labels': [\n".$subgroupTitlesStr,2);
+				//$groupcontent .= $this->tab("\"labels\": [\n".$subgroupTitlesStr,2);
 				//$groupcontent .= $this->tab("],\n",2);
 				$val = ((int)$subgroupValues[1] == (int)$subgroupValues[0]) ? $this->tab($subgroupValues[1],3)."\n" : $this->tab($subgroupValues[1] - $subgroupValues[0],3)."\n";
 
-				$groupcontent .= $this->tab("'values': [\n".$val,2);
+				$groupcontent .= $this->tab("\"values\": [\n".$val,2);
 				$groupcontent .= $this->tab("],\n",2);
-				$groupcontent .= $this->tab("'valuelabels': [\n".$subgroupValueLabelsStr,2);
+				$groupcontent .= $this->tab("\"valuelabels\": [\n".$subgroupValueLabelsStr,2);
 				$groupcontent .= $this->tab("]\n",2);
-				//$groupcontent .= $this->tab("'links': [\n".$subgroupLinksStr,2);
+				//$groupcontent .= $this->tab("\"links\": [\n".$subgroupLinksStr,2);
 				//$groupcontent .= $this->tab("]\n",2);
 
 			}
@@ -520,12 +532,12 @@ class JsChart extends SugarChart {
 
 	function buildChartColors() {
 
-		$content = $this->tab("'color': [\n",1);
+		$content = $this->tab("\"color\": [\n",1);
 		$colorArr = array();
 		$xml = $this->getConfigProperties();
 		$colors = ($this->chartType == "gauge chart") ? $xml->gaugeChartElementColors->color : $xml->chartElementColors->color;
 		foreach($colors as $color) {
-			$colorArr[] = $this->tab("'".str_replace("0x","#",$color)."'",2);
+			$colorArr[] = $this->tab("\"".str_replace("0x","#",$color)."\"",2);
 		}
 		$content .= join(",\n",$colorArr)."\n";
 		$content .= $this->tab("],\n",1);
@@ -685,11 +697,11 @@ class JsChart extends SugarChart {
 		}
 		return $props;
 	}
-	
+
 	function processSpecialChars($str) {
 		return addslashes(html_entity_decode($str,ENT_QUOTES));
 	}
-	
+
 	function processXML($xmlFile) {
 
 		if(!file_exists($xmlFile)) {

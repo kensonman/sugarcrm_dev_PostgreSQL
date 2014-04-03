@@ -2,7 +2,7 @@
 if(!defined('sugarEntry') || !sugarEntry) die('Not A Valid Entry Point');
 /*********************************************************************************
  * SugarCRM Community Edition is a customer relationship management program developed by
- * SugarCRM, Inc. Copyright (C) 2004-2012 SugarCRM Inc.
+ * SugarCRM, Inc. Copyright (C) 2004-2013 SugarCRM Inc.
  * 
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Affero General Public License version 3 as published by the
@@ -166,7 +166,11 @@ EOQ;
 			preg_match_all('#<img[^>]*[\s]+src[^=]*=[\s]*["\']cache/images/(.+?)["\']#si', $emailTemplateBodyHtml, $matches);
 			foreach($matches[1] as $match) {
 				$filename = urldecode($match);
-
+                if($filename != pathinfo($filename, PATHINFO_BASENAME)) {
+                    // don't allow paths there
+                    $emailTemplateBodyHtml = str_replace("cache/images/$match", "", $emailTemplateBodyHtml);
+                    continue;
+                }
 				$file_location = sugar_cached("images/{$filename}");
 				$mime_type = pathinfo($filename, PATHINFO_EXTENSION);
 
@@ -351,7 +355,7 @@ EOQ;
 	///////////////////////////////////////////////////////////////////////////////
 
         clear_register_value('select_array', $focus->object_name);
-        
+
 		if($redirect) {
 		$GLOBALS['log']->debug("Saved record with id of ".$return_id);
 			handleRedirect($return_id, "EmailTemplates");

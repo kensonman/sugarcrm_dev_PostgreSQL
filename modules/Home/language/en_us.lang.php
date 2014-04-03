@@ -2,7 +2,7 @@
 if(!defined('sugarEntry') || !sugarEntry) die('Not A Valid Entry Point');
 /*********************************************************************************
  * SugarCRM Community Edition is a customer relationship management program developed by
- * SugarCRM, Inc. Copyright (C) 2004-2012 SugarCRM Inc.
+ * SugarCRM, Inc. Copyright (C) 2004-2013 SugarCRM Inc.
  * 
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Affero General Public License version 3 as published by the
@@ -233,9 +233,16 @@ $mod_strings = array (
   'LBL_SOURCE_PHPJS' => 'php.js - Use PHP functions in JavaScript',
   'LBL_SOURCE_PHPSQL' => 'PHP SQL Parser',
   'LBL_SOURCE_HTMLPURIFIER' => 'HTML Purifier - A standards-compliant HTML filtering library.',
+  'LBL_SOURCE_XHPROF' => 'XHProf - A function-level hierarchical profiler for PHP.',
+  'LBL_SOURCE_ELASTICA' => 'Elastica - PHP client for the distributed search engine elasticsearch ',
+  'LBL_SOURCE_FACEBOOKSDK' => 'Facebook PHP SDK',
+  'LBL_SOURCE_JQUERY' => 'jQuery - jQuery is a fast, small, and feature-rich JavaScript library.',
+  'LBL_SOURCE_JQUERY_UI' => 'jQuery UI - jQuery UI is a curated set of user interface interactions, effects, widgets, and themes built on top of the jQuery JavaScript Library.',
+  'LBL_SOURCE_OVERLIB' => 'OverlibMWS - The overlibmws library uses javascript for DHTML popups that serve as informational and navigational aids for websites.',
 
   'LBL_DASHLET_TITLE' => 'My Sites',
   'LBL_DASHLET_OPT_TITLE' => 'Title',
+  'LBL_DASHLET_INCORRECT_URL' => 'Incorrect website location is specified',
   'LBL_DASHLET_OPT_URL' => 'Website Location',
   'LBL_DASHLET_OPT_HEIGHT' => 'Dashlet Height (in pixels)',
   'LBL_DASHLET_SUGAR_NEWS' => 'Sugar News',
@@ -244,6 +251,37 @@ $mod_strings = array (
 	'LBL_MORE_DETAIL' => 'More Detail' /*for 508 compliance fix*/,
 	'LBL_BASIC_SEARCH' => 'Basic Search' /*for 508 compliance fix*/,
 	'LBL_ADVANCED_SEARCH' => 'Advanced Search' /*for 508 compliance fix*/,
+    'LBL_TOUR_HOME' => 'Home Icon',
+    'LBL_TOUR_HOME_DESCRIPTION' => 'Quickly get back to your Home Page dashboard in one click.',
+    'LBL_TOUR_MODULES' => 'Modules',
+    'LBL_TOUR_MODULES_DESCRIPTION' => 'All your important modules are here.',
+    'LBL_TOUR_MORE' => 'More Modules',
+    'LBL_TOUR_MORE_DESCRIPTION' => 'The rest of your modules are here.',
+    'LBL_TOUR_SEARCH' => 'Full Text Search',
+    'LBL_TOUR_SEARCH_DESCRIPTION' => 'Search just got a whole lot better.',
+    'LBL_TOUR_NOTIFICATIONS' => 'Notifications',
+    'LBL_TOUR_NOTIFICATIONS_DESCRIPTION' => 'Sugar application notifications would go here.',
+    'LBL_TOUR_PROFILE' => 'Profile',
+    'LBL_TOUR_PROFILE_DESCRIPTION' => 'Access profile, settings and logout.',
+    'LBL_TOUR_QUICKCREATE' => 'Quick Create',
+    'LBL_TOUR_QUICKCREATE_DESCRIPTION' => 'Quickly create records without losing your place.',
+    'LBL_TOUR_FOOTER' => 'Collapsible Footer',
+    'LBL_TOUR_FOOTER_DESCRIPTION' => 'Easily expand and collapse the footer.',
+    'LBL_TOUR_CUSTOM' => 'Custom Apps',
+    'LBL_TOUR_CUSTOM_DESCRIPTION' => 'Custom integrations would go here.',
+    'LBL_TOUR_BRAND' => 'Your Brand',
+    'LBL_TOUR_BRAND_DESCRIPTION' => 'Your logo goes here. You can mouse over for more info.',
+    'LBL_TOUR_WELCOME' => 'Welcome to Sugar',
+    'LBL_TOUR_WATCH' => 'Watch What\'s New in Sugar',
+    'LBL_TOUR_FEATURES' => '<ul style=""><li class="icon-ok">New simplifed navigation bar</li><li class="icon-ok">New collapsible footer</li><li class="icon-ok">Improved Search</li><li class="icon-ok">Updated actions menu</li></ul><p>and much more!</p>',
+    'LBL_TOUR_VISIT' => 'For more information please visit our application',
+    'LBL_TOUR_DONE' => 'You\'re Done!',
+    'LBL_TOUR_REFERENCE_1' => 'You can always reference our',
+    'LBL_TOUR_REFERENCE_2' => 'through the "Support" link under the profile tab.',
+    'LNK_TOUR_DOCUMENTATION' => 'documentation',
+    'LBL_TOUR_CALENDAR_URL_1' => 'Do you share your SugarCRM calendar with 3rd party applications, such as Microsoft Outlook or Exchange? If so, you have a new URL. This new, more secure URL includes a personal key which will prevent unauthorized publishing of your calendar.',
+    'LBL_TOUR_CALENDAR_URL_2' => 'Retrieve your new shared calendar URL.',
+
 );
 
 

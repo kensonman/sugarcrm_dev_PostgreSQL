@@ -2,7 +2,7 @@
 if(!defined('sugarEntry') || !sugarEntry) die('Not A Valid Entry Point');
 /*********************************************************************************
  * SugarCRM Community Edition is a customer relationship management program developed by
- * SugarCRM, Inc. Copyright (C) 2004-2012 SugarCRM Inc.
+ * SugarCRM, Inc. Copyright (C) 2004-2013 SugarCRM Inc.
  * 
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Affero General Public License version 3 as published by the
@@ -335,13 +335,6 @@ $dictionary['Account'] = array('table' => 'accounts', 'audited'=>true, 'unified_
     'table' => 'users',
   ),
 
-  'products' => array(
-      'name' => 'products',
-      'type' => 'link',
-      'relationship' => 'products_accounts',
-      'source' => 'non-db',
-      'vname' => 'LBL_PRODUCTS',
-  ),
 
  'campaign_id' =>
   array (
@@ -461,7 +454,8 @@ $dictionary['Account'] = array('table' => 'accounts', 'audited'=>true, 'unified_
   
   'account_campaign_log' => array('lhs_module' => 'Accounts', 'lhs_table'=> 'accounts', 'lhs_key'=> 'id',
   'rhs_module'=> 'CampaignLog','rhs_table'=>'campaign_log', 'rhs_key'=> 'target_id',
-  'relationship_type'	=>'one-to-many'),
+  'relationship_type'	=>'one-to-many',
+  'relationship_role_column' => 'target_type', 'relationship_role_column_value'=>'Accounts'),
   
   ),
   //This enables optimistic locking for Saves From EditView

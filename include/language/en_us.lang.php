@@ -2,7 +2,7 @@
 if(!defined('sugarEntry') || !sugarEntry) die('Not A Valid Entry Point');
 /*********************************************************************************
  * SugarCRM Community Edition is a customer relationship management program developed by
- * SugarCRM, Inc. Copyright (C) 2004-2012 SugarCRM Inc.
+ * SugarCRM, Inc. Copyright (C) 2004-2013 SugarCRM Inc.
  * 
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Affero General Public License version 3 as published by the
@@ -126,6 +126,7 @@ $app_list_strings = array (
     'Leads' => 'Lead',
     'Activities' => 'Activity',
     'Bugs' => 'Bug Tracker',
+    'KBDocuments' => 'KBDocument',
     'Feeds' => 'RSS',
     'iFrames'=>'My Sites',
     'TimePeriods'=>'Time Period',
@@ -1123,6 +1124,11 @@ $app_list_strings = array (
 );
 
 $app_strings = array (
+  'LBL_TOUR_NEXT' => 'Next',
+  'LBL_TOUR_SKIP' => 'Skip',
+  'LBL_TOUR_BACK' => 'Back',
+  'LBL_TOUR_CLOSE' => 'Close',
+  'LBL_TOUR_TAKE_TOUR' => 'Take the tour',
   'LBL_MY_AREA_LINKS' => 'My area links: ' /*for 508 compliance fix*/,
   'LBL_GETTINGAIR' => 'Getting Air' /*for 508 compliance fix*/,
   'LBL_WELCOMEBAR' => 'Welcome' /*for 508 compliance fix*/,
@@ -1341,7 +1347,7 @@ $app_strings = array (
     'LBL_EMAIL_DELETE_ERROR_DESC'           => 'You do not have access to this area. Contact your site administrator to obtain access.',
     'LBL_EMAIL_ERROR_DUPE_FOLDER_NAME'      => 'Sugar Folder names must be unique.',
     'LBL_EMAIL_ERROR_EMPTY'                 => 'Please enter some search criteria.',
-    'LBL_EMAIL_ERROR_GENERAL_TITLE'         => 'An error has occured',
+    'LBL_EMAIL_ERROR_GENERAL_TITLE'         => 'An error has occurred',
     'LBL_EMAIL_ERROR_LIST_NAME'             => 'An email list with that name already exists',
     'LBL_EMAIL_ERROR_MESSAGE_DELETED'       => 'Message Removed from Server',
     'LBL_EMAIL_ERROR_IMAP_MESSAGE_DELETED'  => 'Either message Removed from Server or moved to a different folder',
@@ -1354,7 +1360,7 @@ $app_strings = array (
     'LBL_EMAIL_ERROR_NO_IMAP_FOLDER_RENAME' => 'IMAP folder renaming is not supported at this time.',
     'LBL_EMAIL_ERROR_SERVER'                => 'A mail server address is required.',
     'LBL_EMAIL_ERROR_SAVE_ACCOUNT'          => 'The mail account may not have been saved.',
-    'LBL_EMAIL_ERROR_TIMEOUT'               => 'An error has occured while communicating with the mail server.',
+    'LBL_EMAIL_ERROR_TIMEOUT'               => 'An error has occurred while communicating with the mail server.',
     'LBL_EMAIL_ERROR_USER'                  => 'A login name is required.',
     'LBL_EMAIL_ERROR_PASSWORD'              => 'A password is required.',
     'LBL_EMAIL_ERROR_PORT'                  => 'A mail server port is required.',
@@ -1615,7 +1621,7 @@ $app_strings = array (
     'LBL_INVALID_FILE_EXTENSION' => 'Invalid File Extension',
 
 
-    'ERR_AJAX_LOAD'     => 'An error has occured:',
+    'ERR_AJAX_LOAD'     => 'An error has occurred:',
     'ERR_AJAX_LOAD_FAILURE'     => 'There was an error processing your request, please try again at a later time.',
     'ERR_AJAX_LOAD_FOOTER' => 'If this error persists, please have your administrator disable Ajax for this module',
     'ERR_CREATING_FIELDS' => 'Error filling in additional detail fields: ',
@@ -1658,6 +1664,7 @@ $app_strings = array (
     'ERR_NO_DB' => 'Could not connect to the database. Please refer to sugarcrm.log for details.',
     'ERR_DB_FAIL' => 'Database failure. Please refer to sugarcrm.log for details.',
     'ERR_EXTERNAL_API_403' => 'Permission Denied. File type is not supported.',
+    'ERR_DB_VERSION' => 'Sugar CRM {0} Files May Only Be Used With A Sugar CRM {1} Database.',
 
 
     'LBL_ACCOUNT'=>'Account',
@@ -1754,6 +1761,9 @@ $app_strings = array (
     'LBL_FILTER_MENU_BY' => 'Filter Menu By',
     'LBL_VCARD' => 'vCard',
     'LBL_EMPTY_VCARD' => 'Please select a vCard file',
+    'LBL_EMPTY_REQUIRED_VCARD' => 'vCard does not have all the required fields for this module. Please refer to sugarcrm.log for details.',
+    'LBL_VCARD_ERROR_FILESIZE' => 'The uploaded file exceeds the 30000 bytes size limit which was specified in the HTML form.',
+    'LBL_VCARD_ERROR_DEFAULT' => 'There was an error uploading the vCard file. Please refer to sugarcrm.log for details.',
     'LBL_IMPORT_VCARD' => 'Import vCard:',
     'LBL_IMPORT_VCARD_BUTTON_KEY' => 'I',
     'LBL_IMPORT_VCARD_BUTTON_LABEL' => 'Import vCard',
@@ -1831,6 +1841,7 @@ $app_strings = array (
     'LBL_OPT_OUT_FLAG_PRIMARY' => 'Opt out Primary Email',
     'LBL_MEETINGS'=>'Meetings',
     'LBL_MEETING'=>'Meeting',
+    'LBL_MEETING_GO_BACK'=>'Go back to the meeting',
     'LBL_MEMBERS'=>'Members',
     'LBL_MEMBER_OF'=>'Member Of',
     'LBL_MODIFIED_BY_USER'=>'Modified by User',
@@ -1910,6 +1921,8 @@ $app_strings = array (
     'LBL_SEARCH_BUTTON_LABEL' => 'Search',
     'LBL_SEARCH_BUTTON_TITLE' => 'Search',
     'LBL_SEARCH' => 'Search',
+    'LBL_SEARCH_TIPS' => "Press the search button or click enter to get an exact match for them.",
+    'LBL_SEARCH_TIPS_2' => "Press the search button or click enter to get an exact match for",
     'LBL_SEARCH_MORE' => 'more',
     'LBL_SEE_ALL' => 'See All',
     'LBL_UPLOAD_IMAGE_FILE_INVALID' => 'Invalid file format, only image file can be uploaded.',
@@ -2000,13 +2013,13 @@ $app_strings = array (
 
     /* The following version of LBL_SUGAR_COPYRIGHT is intended for Sugar Open Source only. */
 
-    'LBL_SUGAR_COPYRIGHT' => '&copy; 2004-2012 SugarCRM Inc. The Program is provided AS IS, without warranty.  Licensed under <a href="LICENSE.txt" target="_blank" class="copyRightLink">AGPLv3</a>.<br />SugarCRM is a trademark of SugarCRM, Inc. All other company and product names may be trademarks of the respective companies with which they are associated.',
+    'LBL_SUGAR_COPYRIGHT' => '&copy; 2004-2013 SugarCRM Inc. The Program is provided AS IS, without warranty.  Licensed under <a href="LICENSE.txt" target="_blank" class="copyRightLink">AGPLv3</a>.<br />SugarCRM is a trademark of SugarCRM, Inc. All other company and product names may be trademarks of the respective companies with which they are associated.',
 
 
 
     // The following version of LBL_SUGAR_COPYRIGHT is for Professional and Enterprise editions.
 
-    'LBL_SUGAR_COPYRIGHT_SUB' => '&copy; 2004-2012 <a href="http://www.sugarcrm.com" target="_blank" class="copyRightLink">SugarCRM Inc.</a> All Rights Reserved.<br />SugarCRM is a trademark of SugarCRM, Inc. All other company and product names may be trademarks of the respective companies with which they are associated.',
+    'LBL_SUGAR_COPYRIGHT_SUB' => '&copy; 2004-2013 <a href="http://www.sugarcrm.com" target="_blank" class="copyRightLink">SugarCRM Inc.</a> All Rights Reserved.<br />SugarCRM is a trademark of SugarCRM, Inc. All other company and product names may be trademarks of the respective companies with which they are associated.',
 
 
     'LBL_SYNC' => 'Sync',
@@ -2014,7 +2027,7 @@ $app_strings = array (
     'LBL_TABGROUP_ALL' => 'All',
     'LBL_TABGROUP_ACTIVITIES' => 'Activities',
     'LBL_TABGROUP_COLLABORATION' => 'Collaboration',
-    'LBL_TABGROUP_HOME' => 'Home',
+    'LBL_TABGROUP_HOME' => 'Dashboard',
     'LBL_TABGROUP_MARKETING' => 'Marketing',
     'LBL_TABGROUP_MY_PORTALS' => 'My Sites',
     'LBL_TABGROUP_OTHER' => 'Other',
@@ -2099,12 +2112,15 @@ $app_strings = array (
     'ERROR_FULLY_EXPIRED'=> "Your company's license for SugarCRM has expired for more than 7 days and needs to be brought up to date. Only admins may login.",
     'ERROR_LICENSE_EXPIRED'=> "Your company's license for SugarCRM needs to be updated. Only admins may login",
     'ERROR_LICENSE_VALIDATION'=> "Your company's license for SugarCRM needs to be validated. Only admins may login",
-  'WARN_LICENSE_SEATS'=>  "Warning: The number of active users is already the maximum number of licenses allowed.",
-  'WARN_LICENSE_SEATS_MAXED'=>  "Warning: The number of active users exceeds the maximum number of licenses allowed.",
+    'WARN_BROWSER_VERSION_WARNING' => "<b>Warning:</b> Your browser version is no longer supported or you are using an unsupported browser.<p></p>The following browser versions are recommended:<p></p><ul><li>Internet Explorer 9 (compatibility view not supported)<li>Firefox 23.0<li>Safari 5.1<li>Chrome 28</ul>",
+    'WARN_BROWSER_IE_COMPATIBILITY_MODE_WARNING' => "<b>Warning:</b> Your browser is in IE compatibility view which is not supported.",
+    'WARN_LICENSE_SEATS'=>  "Warning: The number of active users is already the maximum number of licenses allowed.",
+    'WARN_LICENSE_SEATS_MAXED'=>  "Warning: The number of active users exceeds the maximum number of licenses allowed.",
     'WARN_ONLY_ADMINS'=> "Only admins may log in.",
     'WARN_UNSAVED_CHANGES'=> "You are about to leave this record without saving any changes you may have made to the record. Are you sure you want to navigate away from this record?",
     'ERROR_NO_RECORD' => 'Error retrieving record.  This record may be deleted or you may not be authorized to view it.',
     'ERROR_TYPE_NOT_VALID' => 'Error. This type is not valid.',
+    'ERROR_NO_BEAN' => 'Failed to get bean.', 
     'LBL_DUP_MERGE'=>'Find Duplicates',
     'LBL_MANAGE_SUBSCRIPTIONS'=>'Manage Subscriptions',
     'LBL_MANAGE_SUBSCRIPTIONS_FOR'=>'Manage Subscriptions for ',
@@ -2144,6 +2160,8 @@ $app_strings = array (
     'MSG_JS_ALERT_MTG_REMINDER_TIME' => 'Time: ',
     'MSG_JS_ALERT_MTG_REMINDER_LOC' => 'Location: ',
     'MSG_JS_ALERT_MTG_REMINDER_DESC' => 'Description: ',
+    'MSG_JS_ALERT_MTG_REMINDER_STATUS' => 'Status: ',
+    'MSG_JS_ALERT_MTG_REMINDER_RELATED_TO' => 'Related To: ',
     'MSG_JS_ALERT_MTG_REMINDER_CALL_MSG' => "\nClick OK to view this call or click Cancel to dismiss this message.",
   	'MSG_JS_ALERT_MTG_REMINDER_MEETING_MSG' => "\nClick OK to view this meeting or click Cancel to dismiss this message.",
  	'MSG_LIST_VIEW_NO_RESULTS_BASIC' => "No results found.",
@@ -2173,7 +2191,7 @@ $app_strings = array (
     'LBL_RELATED_CAMPAIGN' =>'Related campaign',
     'LBL_ADD_ALL_LEAD_FIELDS' => 'Add All Fields',
     'LBL_REMOVE_ALL_LEAD_FIELDS' => 'Remove All Fields',
-    'LBL_ONLY_IMAGE_ATTACHMENT' => 'Only image type attachment can be embedded',
+    'LBL_ONLY_IMAGE_ATTACHMENT' => 'Only the following supported image type attachments can be embedded: JPG, PNG.',
     'LBL_REMOVE' => 'Remove',
     'LBL_TRAINING' => 'Support',
     'ERR_DATABASE_CONN_DROPPED'=>'Error executing a query. Possibly, your database dropped the connection. Please refresh this page, you may need to restart you web server.',
@@ -2301,6 +2319,7 @@ $app_strings = array (
     'LBL_MASSUPDATE_DATE' => 'Select Date',
 
     'LBL_VALIDATE_RANGE' => 'is not within the valid range',
+    'LBL_CHOOSE_START_AND_END_DATES' => 'Please choose both a starting and ending date range',
 
     //jchi #  20776
     'LBL_DROPDOWN_LIST_ALL' => 'All',
@@ -2463,6 +2482,9 @@ $app_strings = array (
     'UPLOAD_ERROR_TEXT'          => 'ERROR: There was an error during upload. Error code: {0} - {1}',
     'UPLOAD_ERROR_TEXT_SIZEINFO' => 'ERROR: There was an error during upload. Error code: {0} - {1}. The upload_maxsize is {2} ',
     'UPLOAD_ERROR_HOME_TEXT'     => 'ERROR: There was an error during your upload, please contact an administrator for help.',
+    'UPLOAD_MAXIMUM_EXCEEDED'    => 'Size of Upload ({0} bytes) Exceeded Allowed Maximum: {1} bytes',
+    'UPLOAD_REQUEST_ERROR'    => 'An error has occured. Please refresh your page and try again.',
+
 
     //508 used Access Keys
     'LBL_EDIT_BUTTON_KEY' => 'i',
@@ -2488,6 +2510,8 @@ $app_strings = array (
     'LBL_KEYBOARD_SHORTCUTS_HELP' => '<p><strong>Form Functionality - Alt+</strong><br/> I = ed<b>I</b>t (detailview)<br/> U = d<b>U</b>plicate (detailview)<br/> D = <b>D</b>elete (detailview)<br/> A = s<b>A</b>ve (editview)<br/> L = cance<b>L</b> (editview) <br/><br/></p><p><strong>Search and Navigation  - Alt+</strong><br/> 7 = first input on Edit form<br/> 8 = Advanced Search link<br/> 9 = First Search Form input<br/> 0 = Unified search input<br></p>' ,
 
     'ERR_CONNECTOR_NOT_ARRAY' => 'connector array in {0} been defined incorrectly or is empty and could not be used.',
+    'ERR_SUHOSIN' => 'Upload stream is blocked by Suhosin, please add &quot;upload&quot; to suhosin.executor.include.whitelist (See sugarcrm.log for more information)',
+    'ERR_BAD_RESPONSE_FROM_SERVER' => 'Bad response from the server',
     );
 
 $app_list_strings['moduleList']['Library'] = 'Library';
@@ -3224,7 +3248,7 @@ $app_list_strings['kbdocument_status_dom'] = array (
     'Sugar'=>'Sugar',
     'WebEx'=>'WebEx',
     'GoToMeeting'=>'GoToMeeting',
-    'LotusLive'=>'LotusLive',
+    'IBMSmartCloud'=>'IBM SmartCloud',
     'Google' => 'Google',
     'Box' => 'Box.net',
     'Facebook'=>'Facebook',
@@ -3258,4 +3282,12 @@ $app_list_strings ['emailTemplates_type_list_no_workflow'] = array (
     'campaign' => 'Campaign' ,
     'email' => 'Email',
   );
+$app_strings ['documentation'] = array (
+    'LBL_DOCS' => 'Documentation',
+    'ULT' => '02_Sugar_Ultimate',
+	'ENT' => '02_Sugar_Enterprise',
+	'CORP' => '03_Sugar_Corporate',
+	'PRO' => '04_Sugar_Professional',
+	'COM' => '05_Sugar_Community_Edition'
+);
 ?>

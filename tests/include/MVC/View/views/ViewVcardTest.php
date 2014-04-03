@@ -1,7 +1,7 @@
 <?php 
 /*********************************************************************************
  * SugarCRM Community Edition is a customer relationship management program developed by
- * SugarCRM, Inc. Copyright (C) 2004-2012 SugarCRM Inc.
+ * SugarCRM, Inc. Copyright (C) 2004-2013 SugarCRM Inc.
  * 
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Affero General Public License version 3 as published by the
@@ -37,7 +37,7 @@
  
 require_once('include/MVC/View/views/view.vcard.php');
 
-class ViewVcardTest extends Sugar_PHPUnit_Framework_TestCase
+class ViewVcardTest extends Sugar_PHPUnit_Framework_OutputTestCase
 {   
     public function setUp()
     {
@@ -69,17 +69,8 @@ class ViewVcardTest extends Sugar_PHPUnit_Framework_TestCase
 	    $view = new ViewVcard;
 	    $view->bean = SugarTestContactUtilities::createContact();
 	    $view->module = 'Contacts';
-	    
-        ob_start();
         $view->display();
-        $output = ob_get_contents();
-        ob_end_clean();
-        
         SugarTestContactUtilities::removeAllCreatedContacts();
-        
-        $this->assertContains(
-            'BEGIN:VCARD',
-            $output
-            );
+        $this->expectOutputRegex('/BEGIN\:VCARD/');
 	}
 }

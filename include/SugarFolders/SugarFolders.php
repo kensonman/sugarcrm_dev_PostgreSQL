@@ -2,7 +2,7 @@
 if(!defined('sugarEntry') || !sugarEntry) die('Not A Valid Entry Point');
 /*********************************************************************************
  * SugarCRM Community Edition is a customer relationship management program developed by
- * SugarCRM, Inc. Copyright (C) 2004-2012 SugarCRM Inc.
+ * SugarCRM, Inc. Copyright (C) 2004-2013 SugarCRM Inc.
  * 
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Affero General Public License version 3 as published by the
@@ -333,8 +333,15 @@ ENDQ;
 		$start = ($page - 1) * $pageSize;
 
 		$sort = (empty($sort)) ? $this->defaultSort : $sort;
-        $direction = (empty($direction)) ? $this->defaultDirection : $direction;
-        $order = " ORDER BY {$this->hrSortLocal[$sort]} {$direction}";
+        if (!in_array(strtolower($direction), array('asc', 'desc'))) {
+            $direction = $this->defaultDirection;
+        }
+
+        if (!empty($this->hrSortLocal[$sort])) {
+            $order = " ORDER BY {$this->hrSortLocal[$sort]} {$direction}";
+        } else {
+            $order = "";
+        }
 
 		if($this->is_dynamic) {
 			$r = $this->db->limitQuery(from_html($this->generateSugarsDynamicFolderQuery() . $order), $start, $pageSize);
@@ -344,7 +351,7 @@ ENDQ;
 				  " JOIN emails_text on emails.id = emails_text.email_id
                   WHERE folders_rel.folder_id = '{$folderId}' AND folders_rel.deleted = 0 AND emails.deleted = 0";
 			if ($this->is_group) {
-				$q = $q . " AND emails.assigned_user_id is null";
+				$q = $q . " AND (emails.assigned_user_id is null or emails.assigned_user_id = '')";
 			}
 			$r = $this->db->limitQuery($q . $order, $start, $pageSize);
 		}
@@ -400,7 +407,7 @@ ENDQ;
 			$q = "SELECT count(*) c FROM folders_rel JOIN emails ON emails.id = folders_rel.polymorphic_id" .
 			" WHERE folder_id = '{$folderId}' AND folders_rel.deleted = 0 AND emails.deleted = 0" ;
 			if ($this->is_group) {
-				$q .= " AND emails.assigned_user_id IS null";
+				$q .= " AND (emails.assigned_user_id is null or emails.assigned_user_id = '')";
 			}
 			$r = $this->db->query ( $q ) ;
 		}
@@ -426,7 +433,7 @@ ENDQ;
             $q = "SELECT count(*) c FROM folders_rel fr JOIN emails on fr.folder_id = '{$folderId}' AND fr.deleted = 0 " .
                "AND fr.polymorphic_id = emails.id AND emails.status = 'unread' AND emails.deleted = 0" ;
             if ($this->is_group) {
-                $q .= " AND emails.assigned_user_id IS null";
+                $q .= " AND (emails.assigned_user_id is null or emails.assigned_user_id = '')";
             }
             $r = $this->db->query ( $q ) ;
         }

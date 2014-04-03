@@ -1,6 +1,6 @@
 /*********************************************************************************
  * SugarCRM Community Edition is a customer relationship management program developed by
- * SugarCRM, Inc. Copyright (C) 2004-2012 SugarCRM Inc.
+ * SugarCRM, Inc. Copyright (C) 2004-2013 SugarCRM Inc.
  * 
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Affero General Public License version 3 as published by the
@@ -72,6 +72,39 @@ function loadSugarChart (chartId,jsonFilename,css,chartConfig) {
 
 				var properties = $jit.util.splat(json.properties)[0];	
 				var marginBottom = (chartConfig["orientation"] == 'vertical' && json.values.length > 8) ? 20*4 : 20;
+
+                 // Bug #49732 : Bars in charts overlapping
+                // if to many data to display fix canvas width and set up width to container to allow overflow
+                if ( chartConfig["orientation"] == 'vertical' )
+                {
+                    function fixChartContainer(event, itemsCount)
+                    {
+                        var region = YAHOO.util.Dom.getRegion('content');
+                        if ( region && region.width )
+                        {
+                            // one bar needs about 40 px to correct display data and labels
+                            var realWidth = itemsCount * 40;
+                            if ( realWidth > region.width )
+                            {
+                                var chartCanvas = YAHOO.util.Dom.getElementsByClassName('chartCanvas', 'div');
+                                var chartContainer = YAHOO.util.Dom.getElementsByClassName('chartContainer', 'div');
+                                if ( chartContainer.length > 0 && chartCanvas.length > 0 )
+                                {
+                                    chartContainer = YAHOO.util.Dom.get(chartContainer[0])
+                                    YAHOO.util.Dom.setStyle(chartContainer, 'width', region.width+'px')
+                                    chartCanvas = YAHOO.util.Dom.get(chartCanvas[0]);
+                                    YAHOO.util.Dom.setStyle(chartCanvas, 'width', realWidth+'px');
+                                    if (!event)
+                                    {
+                                        YAHOO.util.Event.addListener(window, "resize", fixChartContainer, json.values.length);
+                                    }
+                                }
+                            }
+                        }
+                    }
+                    fixChartContainer(null, json.values.length);
+                }
+
 				//init BarChart
 				var barChart = new $jit.BarChart({
 				  //id of the visualization container

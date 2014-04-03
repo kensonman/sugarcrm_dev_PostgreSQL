@@ -2,7 +2,7 @@
 if(!defined('sugarEntry') || !sugarEntry) die('Not A Valid Entry Point');
 /*********************************************************************************
  * SugarCRM Community Edition is a customer relationship management program developed by
- * SugarCRM, Inc. Copyright (C) 2004-2012 SugarCRM Inc.
+ * SugarCRM, Inc. Copyright (C) 2004-2013 SugarCRM Inc.
  * 
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Affero General Public License version 3 as published by the
@@ -175,6 +175,7 @@ function log_campaign_activity($identifier, $activity, $update=true, $clicked_ur
                 $data['activity_type']="'" .  $activity . "'";
                 $data['activity_date']="'" . TimeDate::getInstance()->nowDb() . "'";
                 $data['hits']=1;
+                $data['deleted']=0;
                 if (!empty($clicked_url_key)) {
                     $data['related_id']="'".$clicked_url_key."'";
                     $data['related_type']="'".'CampaignTrackers'."'";
@@ -236,6 +237,7 @@ function log_campaign_activity($identifier, $activity, $update=true, $clicked_ur
                 $data['list_id']="'" .  $row['list_id'] . "'";
                 $data['marketing_id']="'" .  $row['marketing_id'] . "'";
                 $data['hits']=1;
+                $data['deleted']=0;
                 if (!empty($clicked_url_key)) {
                     $data['related_id']="'".$clicked_url_key."'";
                     $data['related_type']="'".'CampaignTrackers'."'";
@@ -402,7 +404,7 @@ function get_subscription_lists($focus, $descriptions = false) {
                 	if(!array_search($temp,$unsubs_arr)){
                         $subs_arr[$news_list['name']] = "prospect_list@".$news_list['prospect_list_id']."@campaign@".$news_list['campaign_id'];
                         $match = 'true';
-                        //unset($unsubs_arr[$news_list['name']]);
+                        unset($unsubs_arr[$news_list['name']]);
                     }
                 }
             }else{
@@ -411,7 +413,8 @@ function get_subscription_lists($focus, $descriptions = false) {
         }
          //if this newsletter id never matched a user subscription..
          //..then add to available(unsubscribed) NewsLetters if list is not of type exempt
-         if(($match == 'false') && (strpos($news_list['list_type'],  'exempt') === false)){
+        if (($match == 'false') && (strpos($news_list['list_type'], 'exempt') === false) && (!array_key_exists($news_list['name'], $subs_arr)))
+        {
             $unsubs_arr[$news_list['name']] = "prospect_list@".$news_list['prospect_list_id']."@campaign@".$news_list['campaign_id'];
         }
 
@@ -858,7 +861,7 @@ function write_mail_merge_log_entry($campaign_id,$pl_row) {
         $data['activity_date']="'" . TimeDate::getInstance()->nowDb() . "'";
         $data['list_id']="'" .  $GLOBALS['db']->quote($pl_row['prospect_list_id']) . "'";
         $data['hits']=1;
-
+        $data['deleted']=0;
         $insert_query="INSERT into campaign_log (" . implode(",",array_keys($data)) . ")";
         $insert_query.=" VALUES  (" . implode(",",array_values($data)) . ")";
         $GLOBALS['db']->query($insert_query);
@@ -873,9 +876,9 @@ function write_mail_merge_log_entry($campaign_id,$pl_row) {
         $current_date = $focus->db->now();
         $guidSQL = $focus->db->getGuidSQL();
 
-        $insert_query= "INSERT INTO campaign_log (id,activity_date, campaign_id, target_tracker_key,list_id, target_id, target_type, activity_type";
+        $insert_query= "INSERT INTO campaign_log (id,activity_date, campaign_id, target_tracker_key,list_id, target_id, target_type, activity_type, deleted";
         $insert_query.=')';
-        $insert_query.="SELECT {$guidSQL}, $current_date, plc.campaign_id,{$guidSQL},plp.prospect_list_id, plp.related_id, plp.related_type,'targeted' ";
+        $insert_query.="SELECT {$guidSQL}, $current_date, plc.campaign_id,{$guidSQL},plp.prospect_list_id, plp.related_id, plp.related_type,'targeted',0 ";
         $insert_query.="FROM prospect_lists INNER JOIN prospect_lists_prospects plp ON plp.prospect_list_id = prospect_lists.id";
         $insert_query.=" INNER JOIN prospect_list_campaigns plc ON plc.prospect_list_id = prospect_lists.id";
         $insert_query.=" WHERE plc.campaign_id='".$GLOBALS['db']->quote($focus->id)."'";

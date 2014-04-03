@@ -1,7 +1,7 @@
 <?php
 /*********************************************************************************
  * SugarCRM Community Edition is a customer relationship management program developed by
- * SugarCRM, Inc. Copyright (C) 2004-2012 SugarCRM Inc.
+ * SugarCRM, Inc. Copyright (C) 2004-2013 SugarCRM Inc.
  * 
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Affero General Public License version 3 as published by the
@@ -60,6 +60,13 @@ function build_argument_string($arguments=array()) {
    return $argument_string;
 }
 
+//Bug 52872. Dies if the request does not come from CLI.
+$sapi_type = php_sapi_name();
+if (substr($sapi_type, 0, 3) != 'cli') {
+    die("This is command-line only script");
+}
+//End of #52872
+
 $php_path = '';
 $run_dce_upgrade = false;
 if(isset($argv[3]) && is_dir($argv[3]) && file_exists($argv[3]."/ini_setup.php")) {
@@ -105,4 +112,5 @@ if($run_dce_upgrade) {
 if($output != 0) {
    echo "***************         silentupgrade failed         ***************: $output\n";
 }
+exit($output);
 ?>

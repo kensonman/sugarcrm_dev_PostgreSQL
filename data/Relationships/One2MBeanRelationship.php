@@ -2,7 +2,7 @@
 if(!defined('sugarEntry') || !sugarEntry) die('Not A Valid Entry Point');
 /*********************************************************************************
  * SugarCRM Community Edition is a customer relationship management program developed by
- * SugarCRM, Inc. Copyright (C) 2004-2012 SugarCRM Inc.
+ * SugarCRM, Inc. Copyright (C) 2004-2013 SugarCRM Inc.
  * 
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Affero General Public License version 3 as published by the
@@ -63,7 +63,7 @@ class One2MBeanRelationship extends One2MRelationship
         // test to see if the relationship exist if the relationship between the two beans
         // exist then we just fail out with false as we don't want to re-trigger this
         // the save and such as it causes problems with the related() in sugarlogic
-        if($this->relationship_exists($lhs, $rhs)) return false;
+        if($this->relationship_exists($lhs, $rhs) && !empty($GLOBALS['resavingRelatedBeans'])) return false;
 
         $lhsLinkName = $this->lhsLink;
         $rhsLinkName = $this->rhsLink;
@@ -76,7 +76,8 @@ class One2MBeanRelationship extends One2MRelationship
             $prevRelated = $oldLink->getBeans(null);
             foreach($prevRelated as $oldLHS)
             {
-                $this->remove($oldLHS, $rhs, false);
+                if ($oldLHS->id != $lhs->id)
+                    $this->remove($oldLHS, $rhs, false);
             }
         }
 
@@ -85,8 +86,13 @@ class One2MBeanRelationship extends One2MRelationship
             $lhs->$lhsLinkName->load();
         }
 
-        $this->updateFields($lhs, $rhs, $additionalFields);
+        if (empty($_SESSION['disable_workflow']) || $_SESSION['disable_workflow'] != "Yes")
+        {
+            $this->callBeforeAdd($lhs, $rhs);
+            $this->callBeforeAdd($rhs, $lhs);
+        }
 
+        $this->updateFields($lhs, $rhs, $additionalFields);
 
         if (empty($_SESSION['disable_workflow']) || $_SESSION['disable_workflow'] != "Yes")
         {
@@ -99,6 +105,13 @@ class One2MBeanRelationship extends One2MRelationship
             $this->callAfterAdd($lhs, $rhs);
             $this->callAfterAdd($rhs, $lhs);
         }
+
+        //One2MBean relationships require that the RHS bean be saved or else the relationship will not be saved.
+        //If we aren't already in a relationship save, intitiate a save now.
+        if (empty($GLOBALS['resavingRelatedBeans']))
+            SugarRelationship::resaveRelatedBeans();
+        
+        return true;
     }
 
     protected function updateLinks($lhs, $lhsLinkName, $rhs, $rhsLinkName)
@@ -133,9 +146,15 @@ class One2MBeanRelationship extends One2MRelationship
 
         //If this relationship has already been removed, we can just return
         if ($rhs->$rhsID != $lhs->id)
-            return;
+            return false;
 
         $rhs->$rhsID = '';
+
+        if (empty($_SESSION['disable_workflow']) || $_SESSION['disable_workflow'] != "Yes")
+        {
+            $this->callBeforeDelete($lhs, $rhs);
+            $this->callBeforeDelete($rhs, $lhs);
+        }
 
         if ($save && !$rhs->deleted)
         {
@@ -148,6 +167,8 @@ class One2MBeanRelationship extends One2MRelationship
             $this->callAfterDelete($lhs, $rhs);
             $this->callAfterDelete($rhs, $lhs);
         }
+
+        return true;
     }
 
     /**
@@ -298,13 +319,39 @@ class One2MBeanRelationship extends One2MRelationship
         $alias = empty($params['join_table_alias']) ? "{$link->name}_rel": $params['join_table_alias'];
         $alias = $GLOBALS['db']->getValidDBName($alias, false, 'alias');
 
+        $tableInRoleFilter = "";
+        if (
+            (
+                $startingTable == "meetings"
+                || $startingTable == "notes"
+                || $startingTable == "tasks"
+                || $startingTable == "calls"
+                || $startingTable == "emails"
+            )
+            &&
+            (
+                $targetTable == "meetings"
+                || $targetTable == "notes"
+                || $targetTable == "tasks"
+                || $targetTable == "calls"
+            )
+            && substr($alias, 0, 12 + strlen($targetTable)) == $targetTable . "_activities_"
+        )
+        {
+            $tableInRoleFilter = $linkIsLHS ? $alias : $startingTable;
+        }
+        
         //Set up any table aliases required
         $targetTableWithAlias = "$targetTable $alias";
         $targetTable = $alias;
 
         $query .= "$join_type $targetTableWithAlias ON $startingTable.$startingKey=$targetTable.$targetKey AND $targetTable.deleted=0\n"
         //Next add any role filters
-               . $this->getRoleWhere() . "\n";
+               . $this->getRoleWhere($tableInRoleFilter) . "\n";
+
+        if (!empty($params['return_as_array'])) {
+            $return_array = true;
+        }
 
         if($return_array){
             return array(

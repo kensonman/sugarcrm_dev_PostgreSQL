@@ -2,7 +2,7 @@
 if(!defined('sugarEntry') || !sugarEntry) die('Not A Valid Entry Point');
 /*********************************************************************************
  * SugarCRM Community Edition is a customer relationship management program developed by
- * SugarCRM, Inc. Copyright (C) 2004-2012 SugarCRM Inc.
+ * SugarCRM, Inc. Copyright (C) 2004-2013 SugarCRM Inc.
  * 
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Affero General Public License version 3 as published by the
@@ -623,10 +623,10 @@ function handleDbCreateSugarUser() {
         echo $mod_strings['LBL_PERFORM_DONE'];
     } else {
           echo "<div style='color:red;'>";
-          echo "An error occured when creating user:<br>";
+          echo "An error occurred when creating user:<br>";
           echo "$err<br>";
           echo "</div>";
-          installLog("An error occured when creating user: $err");
+          installLog("An error occurred when creating user: $err");
     }
 }
 
@@ -891,6 +891,13 @@ $contents = '';
 $restrict_str = <<<EOQ
 
 # BEGIN SUGARCRM RESTRICTIONS
+
+EOQ;
+if (ini_get('suhosin.perdir') !== false && strpos(ini_get('suhosin.perdir'), 'e') !== false)
+{
+    $restrict_str .= "php_value suhosin.executor.include.whitelist upload\n";
+}
+$restrict_str .= <<<EOQ
 RedirectMatch 403 {$ignoreCase}.*\.log$
 RedirectMatch 403 {$ignoreCase}/+not_imported_.*\.txt
 RedirectMatch 403 {$ignoreCase}/+(soap|cache|xtemplate|data|examples|include|log4php|metadata|modules)/+.*\.(php|tpl)
@@ -1097,6 +1104,9 @@ function create_default_users(){
     $user->email = '';
     $user->picture = UserDemoData::_copy_user_image($user->id);
     $user->save();
+    //Bug#53793: Keep default current user in the global variable in order to store 'created_by' info as default user
+    //           while installation is proceed.
+    $GLOBALS['current_user'] = $user;
 
 
     if( $create_default_user ){

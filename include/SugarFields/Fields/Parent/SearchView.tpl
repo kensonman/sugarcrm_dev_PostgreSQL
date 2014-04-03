@@ -1,7 +1,7 @@
 {*
 /*********************************************************************************
  * SugarCRM Community Edition is a customer relationship management program developed by
- * SugarCRM, Inc. Copyright (C) 2004-2012 SugarCRM Inc.
+ * SugarCRM, Inc. Copyright (C) 2004-2013 SugarCRM Inc.
  * 
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Affero General Public License version 3 as published by the
@@ -40,9 +40,7 @@ onchange='document.{{$form_name}}.{{sugarvar key='name'}}.value="";document.{{$f
         changeParentQSSearchView("{{sugarvar key='name'}}"); checkParentType(document.{{$form_name}}.{{$vardef.type_name}}.value, document.{{$form_name}}.btn_{{sugarvar key='name'}});'>
 {html_options options={{sugarvar key='options' string=true}} selected=$fields.{{$vardef.type_name}}.value}
 </select>
-{{if $displayParams.split}}
 <br>
-{{/if}}
 {if empty({{sugarvar key='options' string=true}}[$fields.{{$vardef.type_name}}.value])}
 	{assign var="keepParent" value = 0}
 {else}

@@ -2,7 +2,7 @@
 if(!defined('sugarEntry') || !sugarEntry) die('Not A Valid Entry Point');
 /*********************************************************************************
  * SugarCRM Community Edition is a customer relationship management program developed by
- * SugarCRM, Inc. Copyright (C) 2004-2012 SugarCRM Inc.
+ * SugarCRM, Inc. Copyright (C) 2004-2013 SugarCRM Inc.
  * 
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Affero General Public License version 3 as published by the
@@ -115,6 +115,7 @@ $mod_strings = array(
 	'LBL_UW_COMPLIANCE_MBSTRING'				=> 'MBStrings Module',
 	'LBL_UW_COMPLIANCE_MBSTRING_FUNC_OVERLOAD'	=> 'MBStrings mbstring.func_overload Parameter',
 	'LBL_UW_COMPLIANCE_MEMORY'					=> 'PHP Setting: Memory Limit',
+    'LBL_UW_COMPLIANCE_STREAM'                  => 'PHP Setting: Stream',
 	'LBL_UW_COMPLIANCE_MSSQL_MAGIC_QUOTES'		=> 'MS SQL Server & PHP Magic Quotes GPC',
 	'LBL_UW_COMPLIANCE_MYSQL'					=> 'Minimum MySQL Version',
     'LBL_UW_COMPLIANCE_DB'                      => 'Minimum Database Version',
@@ -124,7 +125,8 @@ $mod_strings = array(
 	'LBL_UW_COMPLIANCE_TITLE'					=> 'Server Settings Check',
 	'LBL_UW_COMPLIANCE_TITLE2'					=> 'Detected Settings',
 	'LBL_UW_COMPLIANCE_XML'						=> 'XML Parsing',
-    'LBL_UW_COMPLIANCE_ZIPARCHIVE'				=> 'Zip Support',
+	'LBL_UW_COMPLIANCE_ZIPARCHIVE'				=> 'Zip Support',
+	'LBL_UW_COMPLIANCE_PCRE_VERSION'			=> 'PCRE Version',
 
 	'LBL_UW_COPIED_FILES_TITLE'					=> 'Files Copied Successfully',
 	'LBL_UW_CUSTOM_TABLE_SCHEMA_CHANGE'			=> 'Custom Table Schema Changes',
@@ -285,7 +287,7 @@ $mod_strings = array(
 	//adding the string used in tracker. copying from homepage
 	'LBL_HOME_PAGE_4_NAME' => 'Tracker',
 	'LBL_CURRENT_PHP_VERSION' => '(Your current php version is ',
-	'LBL_RECOMMENDED_PHP_VERSION' => '. Recommended php version is 5.2.1 or above)',
+	'LBL_RECOMMENDED_PHP_VERSION' => '. Recommended php version is 5.2.2 or above)',
 	'LBL_MODULE_NAME' => 'UpgradeWizard',
 	'LBL_UPLOAD_SUCCESS' => 'Upgrade package successfully uploaded. Click Next to perform a final check.',
 	'LBL_UW_TITLE_LAYOUTS' => 'Confirm Layouts',
@@ -307,4 +309,3 @@ $mod_strings = array(
 	'LBL_UPGRADE' => 'Upgrade' /*for 508 compliance fix*/,
 	'LBL_PROCESSING' => 'Processing' /*for 508 compliance fix*/,
 );
-?>

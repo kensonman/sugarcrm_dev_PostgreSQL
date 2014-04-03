@@ -1,7 +1,7 @@
 <?php
 /*********************************************************************************
  * SugarCRM Community Edition is a customer relationship management program developed by
- * SugarCRM, Inc. Copyright (C) 2004-2012 SugarCRM Inc.
+ * SugarCRM, Inc. Copyright (C) 2004-2013 SugarCRM Inc.
  * 
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Affero General Public License version 3 as published by the
@@ -60,7 +60,7 @@ function make_sugar_config(&$sugar_config)
 	global $default_charset;
 	global $default_currency_name;
 	global $default_currency_symbol;
-	global $default_currency_iso4217;
+    global $default_currency_iso4217;
 	global $defaultDateFormat;
 	global $default_language;
 	global $default_module;
@@ -218,6 +218,8 @@ function make_sugar_config(&$sugar_config)
 		    'min_retry_interval' => 60, // minimal job retry delay
 		    'max_retries' => 5, // how many times to retry the job
 		    'timeout' => 86400, // how long a job may spend as running before being force-failed
+		    'soft_lifetime' => 7, // how many days until job record will be soft deleted after completion
+		    'hard_lifetime' => 21, // how many days until job record will be purged from DB
 		),
 		"cron" => array(
 			'max_cron_jobs' => 10, // max jobs per cron schedule run
@@ -238,6 +240,7 @@ function get_sugar_config_defaults() {
 	$sugar_config_defaults = array (
 	'admin_export_only' => false,
 	'export_delimiter' => ',',
+	'export_excel_compatible' => false,
 	'cache_dir' => 'cache/',
 	'calculate_response_time' => true,
 	'create_default_user' => false,
@@ -352,6 +355,7 @@ function get_sugar_config_defaults() {
 	  'default_view' => 'week',
 	  'show_calls_by_default' => true,
 	  'show_tasks_by_default' => true,
+	  'show_completed_by_default' => true,
 	  'editview_width' => 990,
 	  'editview_height' => 485,
 	  'day_timestep' => 15,
@@ -888,9 +892,8 @@ function _mergeCustomAppListStrings($file , $app_list_strings){
 
         // FG - bug 45525 - Specific codelists must NOT be overwritten
 	$exemptDropdowns[] = "moduleList";
-        $exemptDropdowns[] = "parent_type_display";
-        $exemptDropdowns[] = "record_type_display";
-        $exemptDropdowns[] = "record_type_display_notes";
+	$exemptDropdowns[] = "moduleListSingular";
+        $exemptDropdowns = array_merge($exemptDropdowns, getTypeDisplayList());
 
 	foreach($app_list_strings as $key=>$value)
 	{
@@ -973,7 +976,8 @@ function return_application_language($language)
 	}
 
 	// If we are in debug mode for translating, turn on the prefix now!
-	if($sugar_config['translation_string_prefix']) {
+    if(!empty($sugar_config['translation_string_prefix']))
+    {
 		foreach($app_strings as $entry_key=>$entry_value) {
 			$app_strings[$entry_key] = $language.' '.$entry_value;
 		}
@@ -1529,8 +1533,14 @@ function get_select_options_with_id_separate_key ($label_list, $key_list, $selec
 		$selected_string = '';
 		// the system is evaluating $selected_key == 0 || '' to true.  Be very careful when changing this.  Test all cases.
 		// The bug was only happening with one of the users in the drop down.  It was being replaced by none.
-		if (($option_key != '' && $selected_key == $option_key) || ($selected_key == '' && $option_key == '' && !$massupdate) || (is_array($selected_key) &&  in_array($option_key, $selected_key)))
-		{
+        if (
+            ($option_key != '' && $selected_key == $option_key)
+            || (
+                $option_key == ''
+                && (($selected_key == '' && !$massupdate) || $selected_key == '__SugarMassUpdateClearField__')
+            )
+            || (is_array($selected_key) &&  in_array($option_key, $selected_key))
+        ) {
 			$selected_string = 'selected ';
 		}
 
@@ -1545,13 +1555,15 @@ function get_select_options_with_id_separate_key ($label_list, $key_list, $selec
 
 /**
  * Call this method instead of die().
- * Then we call the die method with the error message that is passed in.
+ * We print the error message and then die with an appropriate
+ * exit code.
  */
-function sugar_die($error_message)
+function sugar_die($error_message, $exit_code = 1)
 {
 	global $focus;
 	sugar_cleanup();
-	die($error_message);
+	echo $error_message;
+	die($exit_code);
 }
 
 
@@ -2093,6 +2105,11 @@ function preprocess_param($value){
 
 		$value = securexss($value);
 	}
+	else if (is_array($value)){
+	    foreach ($value as $key => $element) {
+	        $value[$key] = preprocess_param($element);
+	    }
+	}
 
 	return $value;
 }
@@ -2393,29 +2410,81 @@ function get_emails_by_assign_or_link($params)
     	'join_table_link_alias' => 'linkt',
     ));
     $rel_join = str_replace("{$bean->table_name}.id", "'{$bean->id}'", $rel_join);
-    $return_array['select']='SELECT emails.id ';
+    $return_array['select']='SELECT DISTINCT emails.id ';
     $return_array['from'] = "FROM emails ";
-    $return_array['join'] = " INNER JOIN (".
-        // directly assigned emails
-        	"select eb.email_id, 'direct' source FROM emails_beans eb where eb.bean_module = '{$bean->module_dir}' AND eb.bean_id = '{$bean->id}' AND eb.deleted=0 ".
-            " UNION ".
+
+    $return_array['join'] = array();
+
+    // directly assigned emails
+    $return_array['join'][] = "
+        SELECT
+            eb.email_id,
+            'direct' source
+        FROM
+            emails_beans eb
+        WHERE
+            eb.bean_module = '{$bean->module_dir}'
+            AND eb.bean_id = '{$bean->id}'
+            AND eb.deleted=0
+    ";
+
+    // Related by directly by email
+    $return_array['join'][] = "
+        SELECT DISTINCT
+            eear.email_id,
+            'relate' source
+        FROM
+            emails_email_addr_rel eear
+        INNER JOIN
+            email_addr_bean_rel eabr
+        ON
+            eabr.bean_id ='{$bean->id}'
+            AND eabr.bean_module = '{$bean->module_dir}'
+            AND eabr.email_address_id = eear.email_address_id
+            AND eabr.deleted=0
+        WHERE
+            eear.deleted=0
+    ";
+
+    $showEmailsOfRelatedContacts = empty($bean->field_defs[$relation]['hide_history_contacts_emails']);
+    if (!empty($GLOBALS['sugar_config']['hide_history_contacts_emails']) && isset($GLOBALS['sugar_config']['hide_history_contacts_emails'][$bean->module_name])) {
+        $showEmailsOfRelatedContacts = empty($GLOBALS['sugar_config']['hide_history_contacts_emails'][$bean->module_name]);
+    }
+    if ($showEmailsOfRelatedContacts) {
         // Assigned to contacts
-        	"select DISTINCT eb.email_id, 'contact' source FROM emails_beans eb
-                $rel_join AND link_bean.id = eb.bean_id
-        		where eb.bean_module = '$rel_module' AND eb.deleted=0".
-        	" UNION ".
-        // Related by directly by email
-            "select DISTINCT eear.email_id, 'relate' source  from emails_email_addr_rel eear INNER JOIN email_addr_bean_rel eabr
-            	ON eabr.bean_id ='{$bean->id}' AND eabr.bean_module = '{$bean->module_dir}' AND
-    			eabr.email_address_id = eear.email_address_id and eabr.deleted=0 where eear.deleted=0".
-            " UNION ".
+        $return_array['join'][] = "
+            SELECT DISTINCT
+                eb.email_id,
+                'contact' source
+            FROM
+                emails_beans eb
+            $rel_join AND link_bean.id = eb.bean_id
+            WHERE
+                eb.bean_module = '$rel_module'
+                AND eb.deleted=0
+        ";
         // Related by email to linked contact
-            "select DISTINCT eear.email_id, 'relate_contact' source FROM emails_email_addr_rel eear INNER JOIN email_addr_bean_rel eabr
-            	ON eabr.email_address_id=eear.email_address_id AND eabr.bean_module = '$rel_module' AND eabr.deleted=0
-            	$rel_join AND link_bean.id = eabr.bean_id
-            	where eear.deleted=0".
-            ") email_ids ON emails.id=email_ids.email_id ";
-        $return_array['where']=" WHERE emails.deleted=0 ";
+        $return_array['join'][] = "
+            SELECT DISTINCT
+                eear.email_id,
+                'relate_contact' source
+            FROM
+                emails_email_addr_rel eear
+            INNER JOIN
+                email_addr_bean_rel eabr
+            ON
+                eabr.email_address_id=eear.email_address_id
+                AND eabr.bean_module = '$rel_module'
+                AND eabr.deleted=0
+            $rel_join AND link_bean.id = eabr.bean_id
+            WHERE
+                eear.deleted=0
+        ";
+    }
+
+    $return_array['join'] = " INNER JOIN (" . implode(" UNION ", $return_array['join']). ") email_ids ON emails.id=email_ids.email_id ";
+
+    $return_array['where']=" WHERE emails.deleted=0 ";
 
     	//$return_array['join'] = '';
         $return_array['join_tables'][0] = '';
@@ -2732,12 +2801,12 @@ function check_php_version($sys_php_version = '') {
 	// versions below $min_considered_php_version considered invalid by default,
 	// versions equal to or above this ver will be considered depending
 	// on the rules that follow
-	$min_considered_php_version = '5.2.1';
+	$min_considered_php_version = '5.2.2';
 
 	// only the supported versions,
 	// should be mutually exclusive with $invalid_php_versions
 	$supported_php_versions = array (
-    	'5.2.1', '5.2.2', '5.2.3', '5.2.4', '5.2.5', '5.2.6', '5.2.8', '5.3.0'
+    	'5.2.2', '5.2.3', '5.2.4', '5.2.5', '5.2.6', '5.2.8', '5.3.0'
 	);
 
 	// invalid versions above the $min_considered_php_version,
@@ -3067,7 +3136,7 @@ function display_stack_trace($textOnly=false){
 }
 
 function StackTraceErrorHandler($errno, $errstr, $errfile,$errline, $errcontext) {
-	$error_msg = " $errstr occured in <b>$errfile</b> on line $errline [" . date("Y-m-d H:i:s") . ']';
+	$error_msg = " $errstr occurred in <b>$errfile</b> on line $errline [" . date("Y-m-d H:i:s") . ']';
 	$halt_script = true;
 	switch($errno){
 		case 2048: return; //depricated we have lots of these ignore them
@@ -3792,7 +3861,8 @@ function getTrackerSubstring($name) {
 	}
 
 	if($strlen > $max_tracker_item_length) {
-		$chopped = function_exists('mb_substr') ? mb_substr($name, 0, $max_tracker_item_length, "UTF-8") : substr($name, 0, $max_tracker_item_length);
+		$chopped = function_exists('mb_substr') ? mb_substr($name, 0, $max_tracker_item_length-3, "UTF-8") : substr($name, 0, $max_tracker_item_length-3);
+		$chopped .= "...";
 	} else {
 		$chopped = $name;
 	}
@@ -3904,6 +3974,18 @@ function rebuildConfigFile($sugar_config, $sugar_version) {
 	else {
 		return false;
 	}
+}
+
+/**
+ * Loads clean configuration, not overridden by config_override.php
+ *
+ * @return array
+ */
+function loadCleanConfig()
+{
+    $sugar_config = array();
+    require 'config.php';
+    return $sugar_config;
 }
 
 /**
@@ -4374,7 +4456,7 @@ function create_export_query_relate_link_patch($module, $searchFields, $where){
 			}
 		}
 	}
-	$ret_array = array('where'=>$where, 'join'=>$join['join']);
+    $ret_array = array('where'=>$where, 'join'=> isset($join['join']) ? $join['join'] : '');
 	return $ret_array;
 }
 
@@ -4516,7 +4598,8 @@ function verify_image_file($path, $jpeg = false)
             if(file_put_contents($path, $image)) {
                 return true;
             }
-        } elseif ($filetype == "image/png") { // else if the filetype is png, create png
+        } elseif ($filetype == "image/png") {
+            // else if the filetype is png, create png
         	imagealphablending($img, true);
         	imagesavealpha($img, true);
         	ob_start();
@@ -4551,7 +4634,7 @@ function verify_image_file($path, $jpeg = false)
 
 /**
  * Verify uploaded image
- * Verifies that image has proper extension, MIME type and doesn't contain hostile contant
+ * Verifies that image has proper extension, MIME type and doesn't contain hostile content
  * @param string $path  Image path
  * @param bool $jpeg_only  Accept only JPEGs?
  */
@@ -4569,7 +4652,7 @@ function verify_uploaded_image($path, $jpeg_only = false)
 	$img_size = getimagesize($path);
 	$filetype = $img_size['mime'];
 	$ext = end(explode(".", $path));
-	if(substr_count('..', $path) > 0 || ($ext !== $path && !in_array(strtolower($ext), array_keys($supportedExtensions))) ||
+	if(substr_count('..', $path) > 0 || ($ext !== $path && !isset($supportedExtensions[strtolower($ext)])) ||
 	    !in_array($filetype, array_values($supportedExtensions))) {
 	        return false;
 	}
@@ -4796,3 +4879,133 @@ function generateETagHeader($etag){
 		}
 	}
 }
+
+/**
+ * getReportNameTranslation
+ *
+ * Translates the report name if a translation exists,
+ * otherwise just returns the name
+ *
+ * @param string $reportName
+ * @return string translated report name
+ */
+function getReportNameTranslation($reportName) {
+	global $current_language;
+
+	// Used for translating reports
+    $mod_strings = return_module_language($current_language, 'Reports');
+
+	// Search for the report name in the default language and get the key
+	$key = array_search($reportName, return_module_language("", "Reports"));
+
+	// If the key was found, use it to get a translation, otherwise just use report name
+	if (!empty($key)) {
+		$title = $mod_strings[$key];
+	} else {
+		$title = $reportName;
+	}
+
+	return $title;
+}
+
+/**
+ * Remove vars marked senstitive from array
+ * @param array $defs
+ * @param SugarBean|array $data
+ * @return mixed $data without sensitive fields
+ */
+function clean_sensitive_data($defs, $data)
+{
+    foreach($defs as $field => $def) {
+        if(!empty($def['sensitive'])) {
+            if(is_array($data)) {
+                $data[$field] = '';
+            }
+            if($data instanceof SugarBean) {
+                $data->$field = '';
+            }
+        }
+    }
+    return $data;
+}
+
+/**
+ * Return relations with labels for duplicates
+ */
+function getDuplicateRelationListWithTitle($def, $var_def, $module)
+{
+    global $current_language;
+    $select_array = array_unique($def);
+    if (count($select_array) < count($def))
+    {
+        $temp_module_strings = return_module_language($current_language, $module);
+        $temp_duplicate_array = array_diff_assoc($def, $select_array);
+        $temp_duplicate_array = array_merge($temp_duplicate_array, array_intersect($select_array, $temp_duplicate_array));
+
+        foreach ($temp_duplicate_array as $temp_key => $temp_value)
+        {
+            // Don't add duplicate relationships
+            if (!empty($var_def[$temp_key]['relationship']) && array_key_exists($var_def[$temp_key]['relationship'], $select_array))
+            {
+                continue;
+            }
+            $select_array[$temp_key] = $temp_value;
+        }
+        
+        // Add the relationship name for easier recognition
+        foreach ($select_array as $key => $value)
+        {
+            $select_array[$key] .= ' (' . $key . ')';
+        }
+    }
+    asort($select_array);
+    return $select_array;
+}
+
+/**
+ * Gets the list of "*type_display*".
+ * 
+ * @return array
+ */
+function getTypeDisplayList()
+{
+    return array('record_type_display', 'parent_type_display', 'record_type_display_notes');
+}
+
+/**
+ * Breaks given string into substring according
+ * to 'db_concat_fields' from field definition 
+ * and assigns values to corresponding properties
+ * of bean.
+ *
+ * @param SugarBean $bean
+ * @param array $fieldDef
+ * @param string $value
+ */
+function assignConcatenatedValue(SugarBean $bean, $fieldDef, $value)
+{
+    $valueParts = explode(' ',$value);
+    $valueParts = array_filter($valueParts);
+    $fieldNum   = count($fieldDef['db_concat_fields']);
+
+    if (count($valueParts) == 1 && $fieldDef['db_concat_fields'] == array('first_name', 'last_name'))
+    {
+        $bean->last_name = $value;
+    }
+    // elseif ($fieldNum >= count($valueParts))
+    else
+    {
+        for ($i = 0; $i < $fieldNum; $i++)
+        {
+            $fieldValue = array_shift($valueParts);
+            $fieldName  = $fieldDef['db_concat_fields'][$i];
+            $bean->$fieldName = $fieldValue !== false ? $fieldValue : '';
+        }
+
+        if (!empty($valueParts))
+        {
+            $bean->$fieldName .= ' ' . implode(' ', $valueParts);
+        }
+    }
+}
+

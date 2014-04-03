@@ -2,7 +2,7 @@
 if(!defined('sugarEntry') || !sugarEntry) die('Not A Valid Entry Point');
 /*********************************************************************************
  * SugarCRM Community Edition is a customer relationship management program developed by
- * SugarCRM, Inc. Copyright (C) 2004-2012 SugarCRM Inc.
+ * SugarCRM, Inc. Copyright (C) 2004-2013 SugarCRM Inc.
  * 
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Affero General Public License version 3 as published by the
@@ -47,6 +47,7 @@ if(!defined('sugarEntry') || !sugarEntry) die('Not A Valid Entry Point');
 
 
 require_once('modules/Users/authentication/SugarAuthenticate/SugarAuthenticate.php');
+require_once('modules/Users/authentication/SAMLAuthenticate/lib/onelogin/saml.php');
 class SAMLAuthenticate extends SugarAuthenticate {
 	var $userAuthenticateClass = 'SAMLAuthenticateUser';
 	var $authenticationDir = 'SAMLAuthenticate';
@@ -63,16 +64,46 @@ class SAMLAuthenticate extends SugarAuthenticate {
     /**
      * pre_login
      * 
-     * Override the pre_login function from SugarAuthenticate so that we can set a default user_name/user_password $_REQUEST values
-     * if none are supplied
+     * Override the pre_login function from SugarAuthenticate so that user is
+     * redirected to SAML entry point if other is not specified
      */
     function pre_login()
     {
-        if(isset($_REQUEST['action']) && $_REQUEST['action'] == 'Authenticate')
-        {
-            if(empty($_REQUEST['user_name']))$_REQUEST['user_name'] = 'onelogin';
-            if(empty($_REQUEST['user_password']))$_REQUEST['user_password'] = 'onelogin';
-        }
+        parent::pre_login();
+
+        $this->redirectToLogin($GLOBALS['app']);
     }
 
+    /**
+     * Called when a user requests to logout
+     *
+     * Override default behavior. Redirect user to special "Logged Out" page in
+     * order to prevent automatic logging in.
+     */
+    public function logout() {
+        session_destroy();
+        ob_clean();
+        header('Location: index.php?module=Users&action=LoggedOut');
+        sugar_cleanup(true);
+    }
+
+    /**
+     * Redirect to login page
+     * 
+     * @param SugarApplication $app
+     */
+    public function redirectToLogin(SugarApplication $app)
+    {
+        require(get_custom_file_if_exists('modules/Users/authentication/SAMLAuthenticate/settings.php'));
+
+        $loginVars = $app->createLoginVars();
+
+        // $settings - variable from modules/Users/authentication/SAMLAuthenticate/settings.php
+        $settings->assertion_consumer_service_url .= htmlspecialchars($loginVars); 
+        
+        $authRequest = new SamlAuthRequest($settings);
+        $url = $authRequest->create();
+
+        $app->redirect($url);
+    }
 }

@@ -1,7 +1,7 @@
 <?php
 /*********************************************************************************
  * SugarCRM Community Edition is a customer relationship management program developed by
- * SugarCRM, Inc. Copyright (C) 2004-2012 SugarCRM Inc.
+ * SugarCRM, Inc. Copyright (C) 2004-2013 SugarCRM Inc.
  * 
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Affero General Public License version 3 as published by the
@@ -382,17 +382,9 @@ class StudioModule
             $bean_class = new $class();
 
             //create new subpanel definition instance and get list of tabs
-            $spd = new SubPanelDefinitions($bean_class);
-            if (isset($spd->layout_defs['subpanel_setup'])) 
-            {
-                foreach ($spd->layout_defs['subpanel_setup'] as $panelname) 
-                {
-                    if ($panelname['module'] == $subpanel) 
-                    {
-                        $spd_arr[] = array('mod_name'   => $mod_name,
-                                           'panel_name' => $panelname['get_subpanel_data']);
-                    }
-                }
+            $spd = new SubPanelDefinitions($bean_class) ;
+            if ( isset($spd->layout_defs['subpanel_setup'][strtolower($subpanel)]['module']) ){
+                $spd_arr[] = $mod_name;
             }
         }
         return  $spd_arr;
@@ -423,11 +415,9 @@ class StudioModule
         foreach($data as $parentModule){
             //If this module type doesn't support a given metadata type, we will get an exception from getParser()
             try {
-                $parser = ParserFactory::getParser(MB_LISTVIEW, $parentModule['mod_name'], null, $parentModule['panel_name']);
-                if ($parser->removeField($fieldName)) 
-                {
-                    $parser->handleSave(false);
-                }
+                $parser = ParserFactory::getParser( MB_LISTVIEW , $parentModule, null ,  $this->module) ;
+                if ($parser->removeField ( $fieldName ) )
+                    $parser->handleSave(false) ;
             } catch(Exception $e){}
         }
     }

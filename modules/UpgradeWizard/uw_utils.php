@@ -2,7 +2,7 @@
 if(!defined('sugarEntry') || !sugarEntry) die('Not A Valid Entry Point');
 /*********************************************************************************
  * SugarCRM Community Edition is a customer relationship management program developed by
- * SugarCRM, Inc. Copyright (C) 2004-2012 SugarCRM Inc.
+ * SugarCRM, Inc. Copyright (C) 2004-2013 SugarCRM Inc.
  * 
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Affero General Public License version 3 as published by the
@@ -37,6 +37,46 @@ if(!defined('sugarEntry') || !sugarEntry) die('Not A Valid Entry Point');
 
 
 
+
+/**
+ * Implodes some parts of version with specified delimiter, beta & rc parts are removed all time
+ *
+ * @example ('6.5.6') returns 656
+ * @example ('6.5.6beta2') returns 656
+ * @example ('6.5.6rc3') returns 656
+ * @example ('6.6.0.1') returns 6601
+ * @example ('6.5.6', 3, 'x') returns 65x
+ * @example ('6', 3, '', '.') returns 6.0.0
+ *
+ * @param string $version like 6, 6.2, 6.5.0beta1, 6.6.0rc1, 6.5.7 (separated by dot)
+ * @param int $size number of the first parts of version which are requested
+ * @param string $lastSymbol replace last part of version by some string
+ * @param string $delimiter delimiter for result
+ * @return string
+ */
+function implodeVersion($version, $size = 0, $lastSymbol = '', $delimiter = '')
+{
+    preg_match('/^\d+(\.\d+)*/', $version, $parsedVersion);
+    if (empty($parsedVersion)) {
+        return '';
+    }
+
+    $parsedVersion = $parsedVersion[0];
+    $parsedVersion = explode('.', $parsedVersion);
+
+    if ($size == 0) {
+        $size = count($parsedVersion);
+    }
+
+    $parsedVersion = array_pad($parsedVersion, $size, 0);
+    $parsedVersion = array_slice($parsedVersion, 0, $size);
+    if ($lastSymbol !== '') {
+        array_pop($parsedVersion);
+        array_push($parsedVersion, $lastSymbol);
+    }
+
+    return implode($delimiter, $parsedVersion);
+}
 
 /**
  * Helper function for upgrade - get path from upload:// name
@@ -125,7 +165,7 @@ function commitCopyNewFiles($unzip_dir, $zip_from_dir, $path='') {
 	logThis('Starting file copy process...', $path);
 	global $sugar_version;
 	$backwardModules='';
-    if(substr($sugar_version,0,1) >= 5){
+
     	$modules = getAllModules();
 			$backwardModules = array();
 			foreach($modules as $mod){
@@ -138,7 +178,6 @@ function commitCopyNewFiles($unzip_dir, $zip_from_dir, $path='') {
 			    	}
 			   }
 			}
-       }
 
 	$newFiles = findAllFiles(clean_path($unzip_dir . '/' . $zip_from_dir), array());
 	$zipPath = clean_path($unzip_dir . '/' . $zip_from_dir);
@@ -226,12 +265,13 @@ function removeFileFromPath($file,$path, $deleteNot=array()){
 		}
 		if(!file_exists($path))return $removed;
 		$d = dir($path);
-		while($e = $d->read()){
+		while(false !== ($e = $d->read())){  // Fixed bug. !== is required to literally match the type and value of false, so that a filename that could evaluate and cast to false, ie "false" or "0", still allows the while loop to continue.  From example at http://www.php.net/manual/en/function.dir.php
 			$next = $path . '/'. $e;
 			if(substr($e, 0, 1) != '.' && is_dir($next)){
 				$removed += removeFileFromPath($file, $next, $deleteNot);
 			}
 		}
+		$d->close();  // from example at http://www.php.net/manual/en/function.dir.php
 		return $removed;
 	}
 
@@ -712,9 +752,8 @@ function upgradeUWFiles($file) {
     if(file_exists("$from_dir/include/utils/sugar_file_utils.php")) {
         $allFiles[] = "$from_dir/include/utils/sugar_file_utils.php";
     }
-    // users
-    if(file_exists("$from_dir/modules/Users")) {
-        $allFiles[] = findAllFiles("$from_dir/modules/Users", $allFiles);
+    if(file_exists("$from_dir/include/utils/autoloader.php")) {
+        $allFiles[] = "$from_dir/include/utils/autoloader.php";
     }
 
     upgradeUWFilesCopy($allFiles, $from_dir);
@@ -973,6 +1012,7 @@ function checkSystemCompliance() {
 	global $current_language;
 	global $db;
 	global $mod_strings;
+    global $app_strings;
 
 	if(!defined('SUGARCRM_MIN_MEM')) {
 		define('SUGARCRM_MIN_MEM', 40);
@@ -1092,7 +1132,31 @@ function checkSystemCompliance() {
         $ret['ZipStatus'] = "<b><span class=go>{$installer_mod_strings['LBL_CHECKSYS_OK']}</span></b>";
     }
 
+    // PCRE
+    if(defined('PCRE_VERSION')) {
+        if (version_compare(PCRE_VERSION, '7.0') < 0) {
+            $ret['pcreVersion'] = "<b><span class='stop'>{$installer_mod_strings['ERR_CHECKSYS_PCRE_VER']}</span></b>";
+            $ret['error_found'] = true;
+        }
+        else {
+            $ret['pcreVersion'] = "<b><span class='go'>{$installer_mod_strings['LBL_CHECKSYS_OK']}</span></b>";
+        }
+    } else {
+        $ret['pcreVersion'] = "<b><span class='stop'><b>{$installer_mod_strings['ERR_CHECKSYS_PCRE']}</span></b>";
+        $ret['error_found'] = true;
+    }
 
+    // Suhosin allow to use upload://
+    $ret['stream_msg'] = '';
+    if (UploadStream::getSuhosinStatus() == true)
+    {
+        $ret['stream_msg'] = "<b><span class=\"go\">{$installer_mod_strings['LBL_CHECKSYS_OK']}</span></b>";
+    }
+    else
+    {
+        $ret['stream_msg'] = "<b><span class=\"stop\">{$app_strings['ERR_SUHOSIN']}</span></b>";
+        $ret['error_found'] = true;
+    }
 
 	/* mbstring.func_overload
 	$ret['mbstring.func_overload'] = '';
@@ -1399,9 +1463,10 @@ function preLicenseCheck() {
 	global $mod_strings;
 	global $sugar_version;
 
-	if(!isset($sugar_version) || empty($sugar_version)) {
-		require_once('./sugar_version.php');
-	}
+    if (empty($sugar_version))
+    {
+        require('sugar_version.php');
+    }
 
 if(!isset($_SESSION['unzip_dir']) || empty($_SESSION['unzip_dir'])) {
 		logThis('unzipping files in upgrade archive...');
@@ -1543,9 +1608,10 @@ function preflightCheck() {
 	global $mod_strings;
 	global $sugar_version;
 
-	if(!isset($sugar_version) || empty($sugar_version)) {
-		require_once('./sugar_version.php');
-	}
+    if (empty($sugar_version))
+    {
+        require('sugar_version.php');
+    }
 
 	unset($_SESSION['rebuild_relationships']);
 	unset($_SESSION['rebuild_extensions']);
@@ -2141,8 +2207,6 @@ function resetUwSession() {
 		unset($_SESSION['alterCustomTableQueries']);
 	if(isset($_SESSION['skip_zip_upload']))
 		unset($_SESSION['skip_zip_upload']);
-	if(isset($_SESSION['sugar_version_file']))
-		unset($_SESSION['sugar_version_file']);
 	if(isset($_SESSION['install_file']))
 		unset($_SESSION['install_file']);
 	if(isset($_SESSION['unzip_dir']))
@@ -3005,6 +3069,20 @@ function upgradeUserPreferences() {
             upgradeLocaleNameFormat($currentUserNameFormat);
         } else {
             $current_user->setPreference('default_locale_name_format', 's f l', 0, 'global');
+            $current_user->savePreferencesToDB();
+        }
+
+        $changed = false;
+        if(!$current_user->getPreference('calendar_publish_key')) {
+        	// set publish key if not set already
+        	$current_user->setPreference('calendar_publish_key', create_guid());
+        	$changed = true;
+        }
+
+
+        // we need to force save the changes to disk, otherwise we lose them.
+        if($changed)
+        {
             $current_user->savePreferencesToDB();
         }
 
@@ -3881,7 +3959,7 @@ function merge_config_si_settings($write_to_upgrade_log=false, $config_location=
 	} else {
 	   if($write_to_upgrade_log)
 	   {
-	      logThis('config.php values are in sync with config_si.php values.  Skipped merging.');
+	      logThis('config.php values are in sync with config_si.php values.  Skipped merging.', $path);
 	   }
 	   return false;
 	}
@@ -4117,6 +4195,9 @@ function upgradeSugarCache($file)
 	if(file_exists("$from_dir/include/utils/sugar_file_utils.php")) {
 		$allFiles[] = "$from_dir/include/utils/sugar_file_utils.php";
 	}
+	if(file_exists("$from_dir/include/utils/autoloader.php")) {
+		$allFiles[] = "$from_dir/include/utils/autoloader.php";
+	}
 
 	foreach($allFiles as $k => $file) {
 		$destFile = str_replace($from_dir."/", "", $file);
@@ -4131,41 +4212,6 @@ function upgradeSugarCache($file)
         }
 	}
 }
-
-
-/**
- * upgradeDisplayedTabsAndSubpanels
- *
- * @param $version String value of current system version (pre upgrade)
- */
-function upgradeDisplayedTabsAndSubpanels($version)
-{
-	if($version < '620')
-	{
-		logThis('start upgrading system displayed tabs and subpanels');
-	    require_once('modules/MySettings/TabController.php');
-	    $tc = new TabController();
-
-	    //grab the existing system tabs
-	    $tabs = $tc->get_tabs_system();
-
-	    //add Calls, Meetings, Tasks, Notes, Prospects (Targets) and ProspectLists (Target Lists)
-	    //to displayed tabs unless explicitly set to hidden
-	    $modules_to_add = array('Calls', 'Meetings', 'Tasks', 'Notes', 'Prospects', 'ProspectLists');
-	    $added_tabs = array();
-
-	    foreach($modules_to_add as $module)
-	    {
-		       $tabs[0][$module] = $module;
-		       $added_tabs[] = $module;
-	    }
-
-	    logThis('calling set_system_tabs on TabController to add tabs: ' . var_export($added_tabs, true));
-	    $tc->set_system_tabs($tabs[0]);
-	    logThis('finish upgrading system displayed tabs and subpanels');
-	}
-}
-
 
 /**
  * unlinkUpgradeFiles
@@ -4201,26 +4247,26 @@ function unlinkUpgradeFiles($version)
        {
        		if(preg_match('/UpgradeRemoval(\d+)x\.php/', $script, $matches))
        		{
-       	   	   $checkVersion = $matches[1] + 1; //Increment by one to check everything equal or below the target version
        	   	   $upgradeClass = 'UpgradeRemoval' . $matches[1] . 'x';
        	   	   require_once($_SESSION['unzip_dir'].'/scripts/files_to_remove/' . $upgradeClass . '.php');
+               if (class_exists($upgradeClass) == false)
+               {
+                   continue;
+               }
 
-       	   	   //Check to make sure we should load and run this UpgradeRemoval instance
-       	   	   if($checkVersion <= $version && class_exists($upgradeClass))
-       	   	   {
-       	   	   	  $upgradeInstance = new $upgradeClass();
-       	   	   	  if($upgradeInstance instanceof UpgradeRemoval)
-       	   	   	  {
-       	   	   	  	  logThis('Running UpgradeRemoval instance ' . $upgradeClass);
-       	   	   	  	  logThis('Files will be backed up to custom/backup');
-	       	   	   	  $files = $upgradeInstance->getFilesToRemove($version);
-	       	   	   	  foreach($files as $file)
-	       	   	   	  {
-	       	   	   	  	 logThis($file);
-	       	   	   	  }
-	       	   	   	  $upgradeInstance->processFilesToRemove($files);
-       	   	   	  }
-       	   	   }
+                //Check to make sure we should load and run this UpgradeRemoval instance
+                $upgradeInstance = new $upgradeClass();
+                if ($upgradeInstance instanceof UpgradeRemoval && version_compare($upgradeInstance->version, $version, '<='))
+                {
+                    logThis('Running UpgradeRemoval instance ' . $upgradeClass);
+                    logThis('Files will be backed up to custom/backup');
+                    $files = $upgradeInstance->getFilesToRemove($version);
+                    foreach($files as $file)
+                    {
+                       logThis($file);
+                    }
+                    $upgradeInstance->processFilesToRemove($files);
+                }
        	    }
        }
     }
@@ -4354,6 +4400,23 @@ function rebuildSprites($fromUpgrade=true)
             }
         }
         closedir($dh);
+    }
+
+     // add all theme custom image directories
+    $custom_themes_dir = "custom/themes";
+    if (is_dir($custom_themes_dir)) {
+         if($dh = opendir($custom_themes_dir))
+         {
+             while (($dir = readdir($dh)) !== false)
+             {
+                 //Since the custom theme directories don't require an images directory
+                 // we check for it implicitly
+                 if ($dir != "." && $dir != ".." && is_dir('custom/themes/'.$dir."/images")) {
+                     $sb->addDirectory($dir, "custom/themes/{$dir}/images");
+                 }
+             }
+             closedir($dh);
+         }
     }
 
     // generate the sprite goodies

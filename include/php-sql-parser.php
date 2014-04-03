@@ -662,7 +662,8 @@ EOREGEX
 					$expression .= $token ;
 				}
 		  	}
-			if($expression) $expr[] = $this->process_select_expr(trim($expression));
+			$expression = trim($expression);
+			if($expression) $expr[] = $this->process_select_expr($expression);
 			return $expr;
 		}
 
@@ -670,6 +671,11 @@ EOREGEX
 		   is provided, and we set the type of expression.
 		*/
 		private function process_select_expr($expression) {
+
+            if (empty($expression)){
+                return '';
+            }
+
 			$capture = false;
 			$alias = "";
 			$base_expression = $expression;
@@ -917,7 +923,7 @@ EOREGEX
 						}
 
 						if(substr(trim($table),0,1) == '(') {
-							$base_expr=$this->trimSubquery(trim);
+							$base_expr=$this->trimSubquery($table);
 							$join_type = 'JOIN';
 							$sub_tree = $this->process_from($this->split_sql($base_expr));
 							$alias="";

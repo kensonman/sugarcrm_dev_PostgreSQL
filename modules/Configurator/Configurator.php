@@ -2,7 +2,7 @@
 if(!defined('sugarEntry') || !sugarEntry) die('Not A Valid Entry Point');
 /*********************************************************************************
  * SugarCRM Community Edition is a customer relationship management program developed by
- * SugarCRM, Inc. Copyright (C) 2004-2012 SugarCRM Inc.
+ * SugarCRM, Inc. Copyright (C) 2004-2013 SugarCRM Inc.
  * 
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Affero General Public License version 3 as published by the
@@ -42,11 +42,12 @@ if(!defined('sugarEntry') || !sugarEntry) die('Not A Valid Entry Point');
 class Configurator {
 	var $config = '';
 	var $override = '';
-	var $allow_undefined = array ('stack_trace_errors', 'export_delimiter', 'use_real_names', 'developerMode', 'default_module_favicon', 'authenticationClass', 'SAML_loginurl', 'SAML_X509Cert', 'dashlet_auto_refresh_min', 'show_download_tab');
+	var $allow_undefined = array ('stack_trace_errors', 'export_delimiter', 'use_real_names', 'developerMode', 'default_module_favicon', 'authenticationClass', 'SAML_loginurl', 'SAML_X509Cert', 'dashlet_auto_refresh_min', 'show_download_tab', 'enable_action_menu');
 	var $errors = array ('main' => '');
 	var $logger = NULL;
 	var $previous_sugar_override_config_array = array();
 	var $useAuthenticationClass = false;
+    protected $error = null;
 
 	function Configurator() {
 		$this->loadConfig();
@@ -61,6 +62,13 @@ class Configurator {
 	function populateFromPost() {
 		$sugarConfig = SugarConfig::getInstance();
 		foreach ($_POST as $key => $value) {
+			if ($key == "logger_file_ext") {
+			    $trim_value = preg_replace('/.*\.([^\.]+)$/', '\1', $value);
+			    if(in_array($trim_value, $this->config['upload_badext'])) {
+			        $GLOBALS['log']->security("Invalid log file extension: trying to use invalid file extension '$value'.");
+			        continue;
+			    }
+			}
 			if (isset ($this->config[$key]) || in_array($key, $this->allow_undefined)) {
 				if (strcmp("$value", 'true') == 0) {
 					$value = true;
@@ -101,14 +109,24 @@ class Configurator {
 		$GLOBALS['sugar_config'] = $this->config;
 
 		//print_r($overrideArray);
+        //Bug#53013: Clean the tpl cache if action menu style has been changed.
+        if( isset($overrideArray['enable_action_menu']) &&
+                ( !isset($this->previous_sugar_override_config_array['enable_action_menu']) ||
+                    $overrideArray['enable_action_menu'] != $this->previous_sugar_override_config_array['enable_action_menu'] )
+        ) {
+            require_once('modules/Administration/QuickRepairAndRebuild.php');
+            $repair = new RepairAndClear;
+            $repair->module_list = array();
+            $repair->clearTpls();
+        }
 
 		foreach($overrideArray as $key => $val) {
 			if (in_array($key, $this->allow_undefined) || isset ($sugar_config[$key])) {
-				if (strcmp("$val", 'true') == 0) {
+				if (is_string($val) && strcmp($val, 'true') == 0) {
 					$val = true;
 					$this->config[$key] = $val;
 				}
-				if (strcmp("$val", 'false') == 0) {
+				if (is_string($val) && strcmp($val, 'false') == 0) {
 					$val = false;
 					$this->config[$key] = false;
 				}
@@ -139,7 +157,11 @@ class Configurator {
 	}
 
 	function saveConfig() {
-		$this->saveImages();
+        if($this->saveImages() === false)
+        {
+            return false;
+        }
+
 		$this->populateFromPost();
 		$this->handleOverride();
 		$this->clearCache();
@@ -198,18 +220,30 @@ class Configurator {
 
 	function saveImages() {
 		if (!empty ($_POST['company_logo'])) {
-			$this->saveCompanyLogo("upload://".$_POST['company_logo']);
+            if($this->saveCompanyLogo("upload://".$_POST['company_logo']) === false)
+            {
+                return false;
+            }
 		}
 	}
 
 	function checkTempImage($path)
 	{
-	    if(!verify_uploaded_image($path)) {
+        if(!verify_uploaded_image($path)) {
+            $error = translate('LBL_ALERT_TYPE_IMAGE');
         	$GLOBALS['log']->fatal("A user ({$GLOBALS['current_user']->id}) attempted to use an invalid file for the logo - {$path}");
-        	sugar_die('Invalid File Type');
+            $this->error = $error;
+            return false;
 		}
 		return $path;
 	}
+
+    public function getError()
+    {
+        $e = $this->error;
+        $this->error = null;
+        return $e;
+    }
     /**
      * Saves the company logo to the custom directory for the default theme, so all themes can use it
      *
@@ -218,6 +252,11 @@ class Configurator {
 	function saveCompanyLogo($path)
     {
     	$path = $this->checkTempImage($path);
+        if($path === false)
+        {
+            return false;
+        }
+
         mkdir_recursive('custom/'.SugarThemeRegistry::current()->getDefaultImagePath(), true);
         copy($path,'custom/'. SugarThemeRegistry::current()->getDefaultImagePath(). '/company_logo.png');
         sugar_cache_clear('company_logo_attributes');

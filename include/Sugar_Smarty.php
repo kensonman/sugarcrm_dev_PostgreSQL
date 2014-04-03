@@ -2,7 +2,7 @@
 if(!defined('sugarEntry') || !sugarEntry) die('Not A Valid Entry Point');
 /*********************************************************************************
  * SugarCRM Community Edition is a customer relationship management program developed by
- * SugarCRM, Inc. Copyright (C) 2004-2012 SugarCRM Inc.
+ * SugarCRM, Inc. Copyright (C) 2004-2013 SugarCRM Inc.
  * 
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Affero General Public License version 3 as published by the
@@ -49,7 +49,6 @@ if(!defined('SUGAR_SMARTY_DIR'))
  */
 class Sugar_Smarty extends Smarty
 {
-
 	function Sugar_Smarty()
 	{
 		if(!file_exists(SUGAR_SMARTY_DIR))mkdir_recursive(SUGAR_SMARTY_DIR, true);
@@ -73,6 +72,19 @@ class Sugar_Smarty extends Smarty
 		$this->assign("VERSION_MARK", getVersionedPath(''));
 	}
 
+	/**
+	 * Override default _unlink method call to fix Bug 53010
+	 *
+	 * @param string $resource
+     * @param integer $exp_time
+     */
+    function _unlink($resource, $exp_time = null)
+    {
+        if(file_exists($resource)) {
+            return parent::_unlink($resource, $exp_time);
+        }
+        
+        // file wasn't found, so it must be gone.
+        return true;
+    }
 }
-
-?>

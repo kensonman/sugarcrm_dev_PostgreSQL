@@ -2,7 +2,7 @@
 
 /*********************************************************************************
  * SugarCRM Community Edition is a customer relationship management program developed by
- * SugarCRM, Inc. Copyright (C) 2004-2012 SugarCRM Inc.
+ * SugarCRM, Inc. Copyright (C) 2004-2013 SugarCRM Inc.
  * 
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Affero General Public License version 3 as published by the
@@ -63,6 +63,7 @@
 </script>
 {assign var="currentModule" value = $pageData.bean.moduleDir}
 {assign var="singularModule" value = $moduleListSingular.$currentModule}
+{assign var="moduleName" value = $moduleList.$currentModule}
 {assign var="hideTable" value=false}
 
 {if count($data) == 0}
@@ -77,7 +78,7 @@
                     {$APP.MSG_EMPTY_LIST_VIEW_NO_RESULTS|replace:"<item2>":$createLink|replace:"<item3>":$importLink}
                 </p>
                 <p class="submsg">
-                    {$APP.MSG_EMPTY_LIST_VIEW_NO_RESULTS_SUBMSG|replace:"<item1>":$pageData.bean.moduleName|replace:"<item4>":$helpLink}
+                    {$APP.MSG_EMPTY_LIST_VIEW_NO_RESULTS_SUBMSG|replace:"<item1>":$moduleName|replace:"<item4>":$helpLink}
                 </p>
         {elseif $query == "-advanced_search"}
             <p class="msg">

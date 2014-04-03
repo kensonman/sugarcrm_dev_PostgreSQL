@@ -1,7 +1,7 @@
 <?php
 /*********************************************************************************
  * SugarCRM Community Edition is a customer relationship management program developed by
- * SugarCRM, Inc. Copyright (C) 2004-2012 SugarCRM Inc.
+ * SugarCRM, Inc. Copyright (C) 2004-2013 SugarCRM Inc.
  * 
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Affero General Public License version 3 as published by the
@@ -61,7 +61,7 @@ require_once('include/EditView/EditView2.php');
         $metadataFile = $this->getMetaDataFile();
         $this->ev = $this->getEditView();
         $this->ev->ss =& $this->ss;
-        $this->ev->setup($this->module, $this->bean, $metadataFile, 'include/EditView/EditView.tpl');
+        $this->ev->setup($this->module, $this->bean, $metadataFile, get_custom_file_if_exists('include/EditView/EditView.tpl'));
     }
 
  	function display(){

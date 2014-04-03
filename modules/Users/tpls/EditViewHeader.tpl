@@ -1,7 +1,7 @@
 {*
 /*********************************************************************************
  * SugarCRM Community Edition is a customer relationship management program developed by
- * SugarCRM, Inc. Copyright (C) 2004-2012 SugarCRM Inc.
+ * SugarCRM, Inc. Copyright (C) 2004-2013 SugarCRM Inc.
  * 
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Affero General Public License version 3 as published by the
@@ -114,6 +114,16 @@ EditView_tabs.on('contentReady', function(e){
     }
 {/literal}
 {/if}
+
+{if $scroll_to_cal}
+    {literal}
+        //we are coming from the tour welcome page, so we need to simulate a click on the 4th tab
+        // and scroll to the calendar_options div after the tabs have rendered
+        document.getElementById('tab4').click();
+        document.getElementById('calendar_options').scrollIntoView();
+    {/literal}
+{/if}
+
 });
 </script>
 

@@ -2,7 +2,7 @@
 if(!defined('sugarEntry') || !sugarEntry) die('Not A Valid Entry Point');
 /*********************************************************************************
  * SugarCRM Community Edition is a customer relationship management program developed by
- * SugarCRM, Inc. Copyright (C) 2004-2012 SugarCRM Inc.
+ * SugarCRM, Inc. Copyright (C) 2004-2013 SugarCRM Inc.
  * 
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Affero General Public License version 3 as published by the
@@ -131,7 +131,7 @@ array (
 			),
 			'vname' =>'LBL_ANY_EMAIL',
 			'studio' => array('visible'=>false, 'searchview'=>true),
-		),	
+		),
 	'opportunity_role' =>
 		array(
 			'name' => 'opportunity_role',
@@ -606,7 +606,9 @@ array (
   			'rhs_module'		=>	'CampaignLog',
 			'rhs_table'			=>	'campaign_log',
 			'rhs_key' 			=> 	'target_id',
-  			'relationship_type'	=>'one-to-many'
+  			'relationship_type'	=>'one-to-many',
+  			'relationship_role_column' => 'target_type',
+  			'relationship_role_column_value' => 'Contacts'
   		),
 ),
 

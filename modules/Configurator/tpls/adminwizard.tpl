@@ -1,7 +1,7 @@
 {*
 /*********************************************************************************
  * SugarCRM Community Edition is a customer relationship management program developed by
- * SugarCRM, Inc. Copyright (C) 2004-2012 SugarCRM Inc.
+ * SugarCRM, Inc. Copyright (C) 2004-2013 SugarCRM Inc.
  * 
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Affero General Public License version 3 as published by the
@@ -120,7 +120,7 @@ function disableReturnSubmission(e) {
                 </td>
             </tr>
             <tr>
-                <td scope="row" width='12%' nowrap>{$MOD.NEW_LOGO}&nbsp;{sugar_help text=$MOD.NEW_LOGO_HELP}
+                <td scope="row" width='12%' nowrap>{$MOD.NEW_LOGO}&nbsp;{sugar_help text=$MOD.NEW_LOGO_HELP_NO_SPACE}
                 </td>
                 <td  width='35%'>
                     <div id="container_upload"></div>
@@ -528,7 +528,7 @@ function adjustEmailSettings(){
             addToValidate("AdminWizard", 'mail_smtpuser', 'email', false, 
               SUGAR.language.get('Configurator','LBL_GMAIL_SMTPUSER'));
         }
-        else if (server.value == "plus.smtp.mail.yahoo.com" && !isValidEmail(user.value)) {
+        else if (server.value == "smtp.mail.yahoo.com" && !isValidEmail(user.value)) {
             addToValidate("AdminWizard", 'mail_smtpuser', 'email', false, 
               SUGAR.language.get('Configurator','LBL_YAHOOMAIL_SMTPUSER'));
         }
@@ -559,7 +559,7 @@ function changeEmailScreenDisplay(smtptype)
     
     switch (smtptype) {
     case "yahoomail":
-        document.getElementById("mail_smtpserver").value = 'plus.smtp.mail.yahoo.com';
+        document.getElementById("mail_smtpserver").value = 'smtp.mail.yahoo.com';
         document.getElementById("mail_smtpport").value = '465';
         document.getElementById("mail_smtpauth_req").checked = true;
         var ssl = document.getElementById("mail_smtpssl");
@@ -575,18 +575,20 @@ function changeEmailScreenDisplay(smtptype)
         document.getElementById("mail_smtpuser_label").innerHTML = '{/literal}{$MOD.LBL_YAHOOMAIL_SMTPUSER}{literal}';
         break;
     case "gmail":
-        document.getElementById("mail_smtpserver").value = 'smtp.gmail.com';
-        document.getElementById("mail_smtpport").value = '587';
-        document.getElementById("mail_smtpauth_req").checked = true;
-        var ssl = document.getElementById("mail_smtpssl");
-        for(var j=0;j<ssl.options.length;j++) {
-            if(ssl.options[j].text == 'TLS') {
-                ssl.options[j].selected = true;
-                break;
+        if(document.getElementById("mail_smtpserver").value == "" || document.getElementById("mail_smtpserver").value == 'smtp.mail.yahoo.com') {
+            document.getElementById("mail_smtpserver").value = 'smtp.gmail.com';
+            document.getElementById("mail_smtpport").value = '587';
+            document.getElementById("mail_smtpauth_req").checked = true;
+            var ssl = document.getElementById("mail_smtpssl");
+            for(var j=0;j<ssl.options.length;j++) {
+                if(ssl.options[j].text == 'TLS') {
+                    ssl.options[j].selected = true;
+                    break;
+                }
             }
         }
-        document.getElementById("mailsettings1").style.display = 'none';
-        document.getElementById("mailsettings2").style.display = 'none';
+        //document.getElementById("mailsettings1").style.display = 'none';
+        //document.getElementById("mailsettings2").style.display = 'none';
         document.getElementById("mail_smtppass_label").innerHTML = '{/literal}{$MOD.LBL_GMAIL_SMTPPASS}{literal}';
         document.getElementById("mail_smtpuser_label").innerHTML = '{/literal}{$MOD.LBL_GMAIL_SMTPUSER}{literal}';
         break;

@@ -2,7 +2,7 @@
 if(!defined('sugarEntry') || !sugarEntry) die('Not A Valid Entry Point');
 /*********************************************************************************
  * SugarCRM Community Edition is a customer relationship management program developed by
- * SugarCRM, Inc. Copyright (C) 2004-2012 SugarCRM Inc.
+ * SugarCRM, Inc. Copyright (C) 2004-2013 SugarCRM Inc.
  * 
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Affero General Public License version 3 as published by the
@@ -74,7 +74,21 @@ define('PROCESS_ID', 1);
 define('LOG_LEVEL', 2);
 define('LOG_NAME', 3);
 define('LOG_DATA', 4);
-$logFile = $sugar_config['log_dir'].'/'.$sugar_config['log_file'];
+
+// bug 53041 - now that we are respecting file name suffixes for log files, we need to get the log file name properly
+$config = SugarConfig::getInstance();
+$ext = $config->get('logger.file.ext');
+$logfile = $config->get('logger.file.name');
+$log_dir = $config->get('log_dir');
+$log_dir = $log_dir . (empty($log_dir)?'':'/');
+$file_suffix = $config->get('logger.file.suffix');
+$date_suffix = "";
+if( !empty($file_suffix) )
+{
+    $date_suffix = "_" . date(str_replace("%", "", $file_suffix));
+}
+
+$logFile = $log_dir . $logfile . $date_suffix . $ext;
 
 if (!file_exists($logFile)) {
 	die('No Log File');

@@ -2,7 +2,7 @@
 if(!defined('sugarEntry') || !sugarEntry) die('Not A Valid Entry Point');
 /*********************************************************************************
  * SugarCRM Community Edition is a customer relationship management program developed by
- * SugarCRM, Inc. Copyright (C) 2004-2012 SugarCRM Inc.
+ * SugarCRM, Inc. Copyright (C) 2004-2013 SugarCRM Inc.
  * 
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Affero General Public License version 3 as published by the
@@ -347,7 +347,7 @@ $mod_strings = array(
 'LBL_HOME' => 'Home',
 'LBL_NONE'=>'-None-',
 'LBL_DEPLOYE_COMPLETE'=>'Deploy complete',
-'LBL_DEPLOY_FAILED'   =>'An error has occured during deploy process, your package may not have installed correctly',
+'LBL_DEPLOY_FAILED'   =>'An error has occurred during deploy process, your package may not have installed correctly',
 'LBL_ADD_FIELDS'=>'Add Custom Fields',
 'LBL_AVAILABLE_SUBPANELS'=>'Available Subpanels',
 'LBL_ADVANCED'=>'Advanced',
@@ -413,8 +413,15 @@ $mod_strings = array(
 'LBL_ADD_DROPDOWN' => 'Add a new Global Dropdown',
 'LBL_BLANK' => '-blank-',
 'LBL_TAB_ORDER' => 'Tab Order',
-'LBL_TAB_PANELS' => 'Display panels as tabs',
-'LBL_TAB_PANELS_HELP' => 'Display each panel as its own tab instead of having them all appear on one screen',
+'LBL_TAB_PANELS' => 'Enable tabs',
+'LBL_TAB_PANELS_HELP' => 'When tabs are enabled, use the "type" dropdown box<br />for each section to define how it will be displayed (tab or panel)',
+'LBL_TABDEF_TYPE' => 'Display Type',
+'LBL_TABDEF_TYPE_HELP' => 'Select how this section should be displayed. This option only has effect if you have enabled tabs on this view.',
+'LBL_TABDEF_TYPE_OPTION_TAB' => 'Tab',
+'LBL_TABDEF_TYPE_OPTION_PANEL' => 'Panel',
+'LBL_TABDEF_TYPE_OPTION_HELP' => 'Select Panel to have this panel display within the view of the layout. Select Tab to have this panel displayed within a separate tab within the layout. When Tab is specified for a panel, subsequent panels set to display as Panel will be displayed within the tab. <br/>A new Tab will be started for the next panel for which Tab is selected. If Tab is selected for a panel below the first panel, the first panel will necessarily be a Tab.',
+'LBL_TABDEF_COLLAPSE' => 'Collapse',
+'LBL_TABDEF_COLLAPSE_HELP' => 'Select to make the default state of this panel collapsed.',
 'LBL_DROPDOWN_TITLE_NAME' => 'Name',
 'LBL_DROPDOWN_LANGUAGE' => 'Language',
 'LBL_DROPDOWN_ITEMS' => 'List Items',
@@ -425,6 +432,9 @@ $mod_strings = array(
 'LBL_SYNC_TO_DETAILVIEW_NOTICE' => 'This DetailView is sync\'d with the corresponding EditView.<br> Fields and field placement in this DetailView reflect the fields and field placement in the EditView.<br> Changes to the DetailView cannot be saved or deployed within this page. Make changes or un-sync the layouts in the EditView. ',
 'LBL_COPY_FROM_EDITVIEW' => 'Copy from EditView',
 'LBL_DROPDOWN_BLANK_WARNING' => 'Values are required for both the Item Name and the Display Label. To add a blank item, click Add without entering any values for the Item Name and the Display Label.',
+'LBL_DROPDOWN_KEY_EXISTS' => 'Key already exists in list',
+'LBL_NO_SAVE_ACTION' => 'Could not find the save action for this view.',
+'LBL_BADLY_FORMED_DOCUMENT' => 'Studio2:establishLocation: badly formed document',
 
 
 
@@ -554,7 +564,7 @@ $mod_strings = array(
 'ERROR_INVALID_KEY_VALUE'=> "Error: Invalid Key Value: [']",
 'ERROR_NO_HISTORY' => 'No history files found',
 'ERROR_MINIMUM_FIELDS' => 'The layout must contain at least one field',
-'ERROR_GENERIC_TITLE' => 'An error has occured',
+'ERROR_GENERIC_TITLE' => 'An error has occurred',
 'ERROR_REQUIRED_FIELDS' => 'Are you sure you wish to continue? The following required fields are missing from the layout:  ',
 'ERROR_ARE_YOU_SURE' => 'Are you sure you wish to continue?',
 
@@ -712,6 +722,6 @@ $mod_strings = array(
                                  "to apply a U.S. format to the phone number when the record<br>" .
                                  "is saved. The following format will be applied: (xxx) xxx-xxxx.",
 'LBL_ALL_MODULES'=>'All Modules',
-
+'LBL_RELATED_FIELD_ID_NAME_LABEL' => '{0} (related {1} ID)',
 );
 

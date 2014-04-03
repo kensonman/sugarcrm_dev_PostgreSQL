@@ -2,7 +2,7 @@
 if(!defined('sugarEntry') || !sugarEntry) die('Not A Valid Entry Point');
 /*********************************************************************************
  * SugarCRM Community Edition is a customer relationship management program developed by
- * SugarCRM, Inc. Copyright (C) 2004-2012 SugarCRM Inc.
+ * SugarCRM, Inc. Copyright (C) 2004-2013 SugarCRM Inc.
  * 
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Affero General Public License version 3 as published by the
@@ -84,8 +84,7 @@ EOHTML;
 <td colspan='10' width='100%'><IMG height='1' width='1' src='$blankImageURL' alt=''></td>
 </tr>
 <tr>
-<td align='left' valign='middle' nowrap style='padding-bottom: 2px;'>$other_text</td>
-<td width='100%'><IMG height='1' width='1' src='$blankImageURL' alt=''></td>
+<td width='100%' align='left' valign='middle' nowrap style='padding-bottom: 2px;'>$other_text</td>
 EOHTML;
         if ($show_help) {
             $the_form .= "<td align='right' nowrap>";

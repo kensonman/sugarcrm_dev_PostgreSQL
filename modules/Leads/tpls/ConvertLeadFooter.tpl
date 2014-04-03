@@ -1,7 +1,7 @@
 {*
 /*********************************************************************************
  * SugarCRM Community Edition is a customer relationship management program developed by
- * SugarCRM, Inc. Copyright (C) 2004-2012 SugarCRM Inc.
+ * SugarCRM, Inc. Copyright (C) 2004-2013 SugarCRM Inc.
  * 
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Affero General Public License version 3 as published by the
@@ -134,3 +134,6 @@
 </td>
 </tr>
 </table>
+ <script type="text/javascript">
+   addDropdownElements();//Bug#50590 after  lead_conv_ac_op_sel is loaded fill it with all required modules
+ </script>

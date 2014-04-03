@@ -1,7 +1,7 @@
 <?php
 /*********************************************************************************
  * SugarCRM Community Edition is a customer relationship management program developed by
- * SugarCRM, Inc. Copyright (C) 2004-2012 SugarCRM Inc.
+ * SugarCRM, Inc. Copyright (C) 2004-2013 SugarCRM Inc.
  * 
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Affero General Public License version 3 as published by the
@@ -48,7 +48,7 @@ class Bug41392Test extends SOAPTestCase
 {
     public function setUp()
     {
-        $this->_soapURL = $GLOBALS['sugar_config']['site_url'].'/soap.php?XDEBUG_SESSION_START=michael';
+        $this->_soapURL = $GLOBALS['sugar_config']['site_url'].'/soap.php';
         parent::setUp();
     }
 

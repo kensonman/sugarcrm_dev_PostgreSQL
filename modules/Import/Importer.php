@@ -3,7 +3,7 @@ if(!defined('sugarEntry') || !sugarEntry) die('Not A Valid Entry Point');
 
 /*********************************************************************************
  * SugarCRM Community Edition is a customer relationship management program developed by
- * SugarCRM, Inc. Copyright (C) 2004-2012 SugarCRM Inc.
+ * SugarCRM, Inc. Copyright (C) 2004-2013 SugarCRM Inc.
  * 
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Affero General Public License version 3 as published by the
@@ -230,6 +230,19 @@ class Importer
                 }
             }
 
+            // Handle email field, if it's a semi-colon separated export
+            if ($field == 'email_addresses_non_primary' && !empty($rowValue))
+            {
+                if (strpos($rowValue, ';') !== false)
+                {
+                    $rowValue = explode(';', $rowValue);
+                }
+                else
+                {
+                    $rowValue = array($rowValue);
+                }
+            }
+
             // Handle email1 and email2 fields ( these don't have the type of email )
             if ( $field == 'email1' || $field == 'email2' )
             {
@@ -272,9 +285,27 @@ class Importer
             // If the field is empty then there is no need to check the data
             if( !empty($rowValue) )
             {
-                //Start
-                $rowValue = $this->sanitizeFieldValueByType($rowValue, $fieldDef, $defaultRowValue, $focus, $fieldTranslated);
-                if ($rowValue === FALSE) {
+                // If it's an array of non-primary e-mails, check each mail
+                if ($field == "email_addresses_non_primary" && is_array($rowValue))
+                {
+                    foreach ($rowValue as $tempRow)
+                    {
+                        $tempRow = $this->sanitizeFieldValueByType($tempRow, $fieldDef, $defaultRowValue, $focus, $fieldTranslated);
+                        if ($tempRow === FALSE)
+                        {
+                            $rowValue = false;
+                            $do_save = false;
+                            break;
+                        }
+                    }
+                }
+                else
+                {
+                    $rowValue = $this->sanitizeFieldValueByType($rowValue, $fieldDef, $defaultRowValue, $focus, $fieldTranslated);
+                }
+
+                if ($rowValue === false)
+                {
 					/* BUG 51213 - jeff @ neposystems.com */
                     $do_save = false;
                     continue;
@@ -509,9 +540,14 @@ class Importer
         */
         if ( ( !empty($focus->new_with_id) && !empty($focus->date_modified) ) ||
              ( empty($focus->new_with_id) && $timedate->to_db($focus->date_modified) != $timedate->to_db($timedate->to_display_date_time($focus->fetched_row['date_modified'])) )
-        )
+        ) 
             $focus->update_date_modified = false;
 
+        // Bug 53636 - Allow update of "Date Created"
+        if (!empty($focus->date_entered)) {
+        	$focus->update_date_entered = true;
+        }
+            
         $focus->optimistic_lock = false;
         if ( $focus->object_name == "Contact" && isset($focus->sync_contact) )
         {
@@ -539,8 +575,21 @@ class Importer
         // call any logic needed for the module preSave
         $focus->beforeImportSave();
 
+        // Bug51192: check if there are any changes in the imported data
+        $hasDataChanges = false;
+        $dataChanges=$focus->db->getAuditDataChanges($focus);
+        
+        if(!empty($dataChanges)) {
+            foreach($dataChanges as $field=>$fieldData) {
+                if($fieldData['data_type'] != 'date' || strtotime($fieldData['before']) != strtotime($fieldData['after'])) {
+                    $hasDataChanges = true;
+                    break;
+                }
+            }
+        }
+        
         // if modified_user_id is set, set the flag to false so SugarBEan will not reset it
-        if (isset($focus->modified_user_id) && $focus->modified_user_id) {
+        if (isset($focus->modified_user_id) && $focus->modified_user_id && !$hasDataChanges) {
             $focus->update_modified_by = false;
         }
         // if created_by is set, set the flag to false so SugarBEan will not reset it
@@ -592,7 +641,7 @@ class Importer
         //merge with mappingVals array
         if(!empty($advMapping) && is_array($advMapping))
         {
-            $mappingValsArr = array_merge($mappingValsArr,$advMapping);
+            $mappingValsArr = $advMapping + $mappingValsArr;
         }
 
         //set mapping
