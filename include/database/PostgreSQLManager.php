@@ -406,7 +406,7 @@ class PostgreSQLManager extends DBManager
 										      AND n.nspname <> 'information_schema'
 										      AND n.nspname !~ '^pg_toast'
 										  AND pg_catalog.pg_table_is_visible(c.oid)
-										  AND c.relkind='r' AND c.relname LIKE '$tableName%'
+										  AND c.relkind='r' AND c.relname = '$tableName'
 										ORDER BY 1,2;");
 			
 			if(empty($result)) 
